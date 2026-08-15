@@ -11,20 +11,21 @@ window.__ModuleLoader__.load({
     const React = require("react");
 
     // ── CNY-per-token rates ────────────────────────────────────────────────
-    // Rates are expressed in USD per million tokens and converted using the
-    // gallery's fixed estimate of 1 CNY = 0.15 USD. Pricing changes over time;
-    // see the package README before treating the result as authoritative.
+    // Rates are expressed directly in CNY per million tokens. These are fixed
+    // midpoint estimates between DeepSeek's peak and off-peak rates; pricing
+    // changes over time, so see the package README before treating them as authoritative.
+    // Source: https://api-docs.deepseek.com/zh-cn/quick_start/pricing
     const RATES = {
       "deepseek-v4-flash": {
-        input: 0.14 / 0.15 / 1e6,
-        output: 0.28 / 0.15 / 1e6,
-        cacheRead: 0.0028 / 0.15 / 1e6,
+        input: 2.25 / 1e6,
+        output: 6.75 / 1e6,
+        cacheRead: 0.08 / 1e6,
         cacheWrite: 0,
       },
       "deepseek-v4-pro": {
-        input: 0.435 / 0.15 / 1e6,
-        output: 0.87 / 0.15 / 1e6,
-        cacheRead: 0.003625 / 0.15 / 1e6,
+        input: 6.75 / 1e6,
+        output: 20.25 / 1e6,
+        cacheRead: 0.23 / 1e6,
         cacheWrite: 0,
       },
       "gpt-5.6-sol": {
@@ -46,13 +47,11 @@ window.__ModuleLoader__.load({
         cacheWrite: 0.25 / 0.15 / 1e6,
       },
     };
-    // Default rate used when no per-message model can be determined yet
-    // (e.g. a brand-new session with no assistant output).
-    const DEFAULT_MODEL = "deepseek-v4-flash";
     // Resolve the rate-relevant model for a session: the most recent assistant
     // message reports the model that produced it (`provenance.model`), which is
     // the best available signal for which rate row to bill the cumulative
-    // token usage against.
+    // token usage against. Unknown or unavailable models are intentionally not
+    // priced rather than being assigned an unrelated fallback rate.
     const activeModel = (nodes) => {
       if (!Array.isArray(nodes)) return undefined;
       for (let i = nodes.length - 1; i >= 0; i--) {
@@ -133,22 +132,22 @@ window.__ModuleLoader__.load({
               s && s.chat && s.chat.legacy ? s.chat.legacy.nodes : undefined
             );
             const groups = [];
+             // Cost FIRST in the line, priced at the session's actual model.
+             const model = activeModel(nodes);
+             const rate = model ? RATES[model] : undefined;
+             if (usage !== undefined && rate) {
+               const total =
+                 (usage.uncachedInputTokens || 0) * rate.input +
+                 (usage.outputTokens || 0) * rate.output +
+                 (usage.cacheReadTokens || 0) * rate.cacheRead +
+                 (usage.cacheWriteTokens || 0) * rate.cacheWrite;
+               if (total > 0) {
+                 const amt = total >= 1 ? total.toFixed(2) : total >= 0.01 ? total.toFixed(3) : total.toFixed(4);
+                 groups.push(React.createElement("span", { key: "cost", style: { fontWeight: 500 } }, "¥" + amt));
+               }
+             }
 
-            // Cost FIRST in the line, priced at the session's actual model.
-            if (usage !== undefined) {
-              const rate = RATES[activeModel(nodes)] || RATES[DEFAULT_MODEL];
-              const total =
-                (usage.uncachedInputTokens || 0) * rate.input +
-                (usage.outputTokens || 0) * rate.output +
-                (usage.cacheReadTokens || 0) * rate.cacheRead +
-                (usage.cacheWriteTokens || 0) * rate.cacheWrite;
-              if (total > 0) {
-                const amt = total >= 1 ? total.toFixed(2) : total >= 0.01 ? total.toFixed(3) : total.toFixed(4);
-                groups.push(React.createElement("span", { key: "cost", style: { fontWeight: 500 } }, "¥" + amt));
-              }
-            }
-
-            if (projected && projected.steps > 0) {
+             if (projected && projected.steps > 0) {
               groups.push(label("stats.counts", { turns: projected.turns, steps: projected.steps }));
               const durations = [];
               if (projected.llmMs > 0) durations.push(label("stats.llm", { duration: formatDuration(projected.llmMs) }));

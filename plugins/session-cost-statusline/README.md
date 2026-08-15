@@ -18,7 +18,7 @@ The estimate uses cumulative token projections and an embedded model-rate table.
 - Slot: `conversation.composer.dock`
 - Tested with DSH `0.1.0-rc.6`
 
-Pricing changes over time. Review the embedded rate table before relying on the displayed amount.
+The embedded DeepSeek V4 rates are fixed CNY midpoint estimates between the published peak and off-peak prices (Flash: ¥2.25/¥0.08/¥6.75; Pro: ¥6.75/¥0.23/¥20.25 per million input-miss/cache-hit/output tokens), based on the [DeepSeek pricing documentation](https://api-docs.deepseek.com/zh-cn/quick_start/pricing). The statusline intentionally does not distinguish time of day. It uses the latest model provenance to price cumulative usage; if no model is available or the model is not in the rate table, it omits the cost rather than applying a fallback. Pricing changes over time; review the embedded rate table before relying on the displayed amount.
 
 ## License
 
