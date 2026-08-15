@@ -1,0 +1,4 @@
+# Profile layer for @yfzhou/dsh-composer-enter.
+- insert:
+    - id: composer-enter
+      name: '@yfzhou/dsh-composer-enter'

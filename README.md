@@ -12,6 +12,7 @@ A personal collection of plugins for [DeepSeek Harness (DSH)](https://www.npmjs.
 | [Mobile Sidebar](plugins/mobile-sidebar) | `@yfzhou/dsh-mobile-sidebar` | Web client | Removes the collapsed rail on small screens and adds a hamburger beside the conversation title. |
 | [Full-width Chat](plugins/full-width-chat) | `@yfzhou/dsh-full-width-chat` | Web client | Lets conversations use the full available content width. |
 | [Session Cost Statusline](plugins/session-cost-statusline) | `@yfzhou/dsh-session-cost-statusline` | Web client | Adds an estimated CNY cost before the standard session statistics. |
+| [Composer Enter](plugins/composer-enter) | `@yfzhou/dsh-composer-enter` | Web client | Makes Enter insert newlines and Cmd/Ctrl+Enter submit. |
 | [Codex Moot Escalation](plugins/codex-moot-escalation) | `@yfzhou/dsh-codex-moot-escalation` | Host | Removes impossible escalation arguments for Codex sessions already running with unrestricted sandbox access. |
 
 ## Installation

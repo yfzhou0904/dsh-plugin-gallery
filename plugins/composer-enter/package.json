@@ -1,0 +1,34 @@
+{
+  "name": "@yfzhou/dsh-composer-enter",
+  "description": "Makes Enter insert newlines in the DSH composer and Cmd/Ctrl+Enter submit.",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "lib/index.js",
+  "files": ["lib", "README.md", "LICENSE", "cordis.bundle.yml"],
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.bundle.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": []
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yfzhou0904/dsh-plugin-gallery.git",
+    "directory": "plugins/composer-enter"
+  },
+  "homepage": "https://github.com/yfzhou0904/dsh-plugin-gallery#readme",
+  "bugs": {
+    "url": "https://github.com/yfzhou0904/dsh-plugin-gallery/issues"
+  },
+  "keywords": ["deepseek", "dsh", "cordis", "plugin", "composer", "keyboard"],
+  "publishConfig": { "access": "public" },
+  "license": "MIT"
+}
