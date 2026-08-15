@@ -1,7 +1,7 @@
 {
   "name": "@yfzhou/dsh-session-cost-statusline",
   "description": "Shows the current session's estimated monetary cost in CNY as the leading item in the DeepSeek Harness status line.",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "type": "module",
   "main": "lib/index.js",
   "files": ["lib", "README.md", "LICENSE", "cordis.bundle.yml"],
@@ -18,6 +18,9 @@
       "platform": "web",
       "inject": []
     }
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
   },
   "repository": {
     "type": "git",

@@ -34,6 +34,8 @@ importers:
         specifier: ^3.3.2
         version: 3.3.2
 
+  plugins/composer-enter: {}
+
   plugins/full-width-chat: {}
 
   plugins/mobile-sidebar:
@@ -42,7 +44,11 @@ importers:
         specifier: ^0.1.0-rc.6
         version: 0.1.0-rc.6(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1))
 
-  plugins/session-cost-statusline: {}
+  plugins/session-cost-statusline:
+    dependencies:
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
 
 packages:
 
@@ -473,6 +479,9 @@ packages:
   web-streams-polyfill@3.3.3:
     resolution: {integrity: sha512-d2JWLCivmZYTSIoge9MsgFCZrt571BikcWGYkjC1khllbTeDlGqZ2D8vD8E/lJa8WGWbb7Plm8/XJYV7IJHZZw==}
     engines: {node: '>= 8'}
+
+  zod@4.4.3:
+    resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
@@ -1135,5 +1144,7 @@ snapshots:
       vfile-message: 4.0.3
 
   web-streams-polyfill@3.3.3: {}
+
+  zod@4.4.3: {}
 
   zwitch@2.0.4: {}

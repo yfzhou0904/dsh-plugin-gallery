@@ -1,8 +1,7 @@
 // Browser client bundle for @yfzhou/dsh-session-cost-statusline.
 // Served as a prebuilt module via window.__ModuleLoader__.load (CJS factory
-// form). This is client-only: it renders the status line and carries the CNY
-// rate table embedded (the persistent client module system has no
-// host.call/harness RPC bridge, unlike dynamic plugins).
+// form). The host owns all pricing and exposes the replayable sessionCost
+// projection; this bundle only renders it.
 window.__ModuleLoader__.load({
   id: "@yfzhou/dsh-session-cost-statusline",
   factory: (require) => {
@@ -10,58 +9,8 @@ window.__ModuleLoader__.load({
     var exports = module.exports;
     const React = require("react");
 
-    // ── CNY-per-token rates ────────────────────────────────────────────────
-    // Rates are expressed directly in CNY per million tokens. These are fixed
-    // midpoint estimates between DeepSeek's peak and off-peak rates; pricing
-    // changes over time, so see the package README before treating them as authoritative.
-    // Source: https://api-docs.deepseek.com/zh-cn/quick_start/pricing
-    const RATES = {
-      "deepseek-v4-flash": {
-        input: 2.25 / 1e6,
-        output: 6.75 / 1e6,
-        cacheRead: 0.08 / 1e6,
-        cacheWrite: 0,
-      },
-      "deepseek-v4-pro": {
-        input: 6.75 / 1e6,
-        output: 20.25 / 1e6,
-        cacheRead: 0.23 / 1e6,
-        cacheWrite: 0,
-      },
-      "gpt-5.6-sol": {
-        input: 5.0 / 0.15 / 1e6,
-        output: 30.0 / 0.15 / 1e6,
-        cacheRead: 0.5 / 0.15 / 1e6,
-        cacheWrite: 6.25 / 0.15 / 1e6,
-      },
-      "gpt-5.6-terra": {
-        input: 2.0 / 0.15 / 1e6,
-        output: 12.0 / 0.15 / 1e6,
-        cacheRead: 0.2 / 0.15 / 1e6,
-        cacheWrite: 2.5 / 0.15 / 1e6,
-      },
-      "gpt-5.6-luna": {
-        input: 0.2 / 0.15 / 1e6,
-        output: 1.2 / 0.15 / 1e6,
-        cacheRead: 0.02 / 0.15 / 1e6,
-        cacheWrite: 0.25 / 0.15 / 1e6,
-      },
-    };
-    // Resolve the rate-relevant model for a session: the most recent assistant
-    // message reports the model that produced it (`provenance.model`), which is
-    // the best available signal for which rate row to bill the cumulative
-    // token usage against. Unknown or unavailable models are intentionally not
-    // priced rather than being assigned an unrelated fallback rate.
-    const activeModel = (nodes) => {
-      if (!Array.isArray(nodes)) return undefined;
-      for (let i = nodes.length - 1; i >= 0; i--) {
-        const n = nodes[i];
-        if (n && n.provenance && typeof n.provenance.model === "string" && n.provenance.model.length > 0) {
-          return n.provenance.model;
-        }
-      }
-      return undefined;
-    };
+    // Cost is computed by the durable host `sessionCost` projection. The
+    // browser only renders that replayable, per-model accounting result.
 
     const EN = {
       "stats.counts": (p) => `${p.turns} turns · ${p.steps} steps`,
@@ -123,29 +72,17 @@ window.__ModuleLoader__.load({
           { name: "conversation.composer.dock", id: "stats", priority: -1, order: 0, locale: "conversation" },
           (props) => {
             const useProjection = props.useProjection;
-            const useSession = props.useSession;
             const t = typeof props.t === "function" ? props.t : null;
             const label = (key, params) => (t ? t(key, params) : EN[key] ? EN[key](params) : "");
             const usage = useProjection("tokenUsage");
             const projected = useProjection("sessionStats");
-            const nodes = useSession((s) =>
-              s && s.chat && s.chat.legacy ? s.chat.legacy.nodes : undefined
-            );
+            const cost = useProjection("sessionCost");
             const groups = [];
-             // Cost FIRST in the line, priced at the session's actual model.
-             const model = activeModel(nodes);
-             const rate = model ? RATES[model] : undefined;
-             if (usage !== undefined && rate) {
-               const total =
-                 (usage.uncachedInputTokens || 0) * rate.input +
-                 (usage.outputTokens || 0) * rate.output +
-                 (usage.cacheReadTokens || 0) * rate.cacheRead +
-                 (usage.cacheWriteTokens || 0) * rate.cacheWrite;
-               if (total > 0) {
-                 const amt = total >= 1 ? total.toFixed(2) : total >= 0.01 ? total.toFixed(3) : total.toFixed(4);
-                 groups.push(React.createElement("span", { key: "cost", style: { fontWeight: 500 } }, "¥" + amt));
-               }
-             }
+            if (cost !== undefined && cost.totalCny > 0) {
+              const total = cost.totalCny;
+              const amt = total >= 1 ? total.toFixed(2) : total >= 0.01 ? total.toFixed(3) : total.toFixed(4);
+              groups.push(React.createElement("span", { key: "cost", style: { fontWeight: 500 } }, "¥" + amt));
+            }
 
              if (projected && projected.steps > 0) {
               groups.push(label("stats.counts", { turns: projected.turns, steps: projected.steps }));
