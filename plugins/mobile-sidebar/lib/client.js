@@ -5,6 +5,7 @@ window.__ModuleLoader__.load({
     var module = { exports: {} };
     var exports = module.exports;
     const React = require("react");
+    const { IconPanelLeftOutline16 } = require("@deepseek-ai/dsh-client-ui-primitives");
 
     const STYLE_ID = "@yfzhou/dsh-mobile-sidebar/styles";
     const CSS = `
@@ -25,15 +26,12 @@ window.__ModuleLoader__.load({
           display: none !important;
         }
 
-        header:has(.mobnav-mobile-toggle) {
-          padding-left: 56px !important;
+        [data-sidebar-collapsed] [data-phase="active"] header,
+        [data-sidebar-collapsed] [data-phase="settling"] header {
+          padding-left: 48px !important;
         }
 
-        :has(> .mobnav-mobile-toggle) {
-          display: contents !important;
-        }
-
-        .mobnav-mobile-toggle {
+        [data-sidebar-collapsed] .mobnav-mobile-toggle {
           appearance: none;
           display: inline-flex;
           position: absolute;
@@ -45,6 +43,7 @@ window.__ModuleLoader__.load({
           align-items: center;
           justify-content: center;
           padding: 0;
+          pointer-events: auto;
           color: var(--dsw-alias-label-secondary);
           background: transparent;
           border: 0;
@@ -61,29 +60,6 @@ window.__ModuleLoader__.load({
           outline-offset: 2px;
         }
 
-        .mobnav-mobile-toggle-lines,
-        .mobnav-mobile-toggle-lines::before,
-        .mobnav-mobile-toggle-lines::after {
-          display: block;
-          width: 17px;
-          height: 1.5px;
-          background: currentColor;
-          border-radius: 2px;
-        }
-
-        .mobnav-mobile-toggle-lines {
-          position: relative;
-        }
-
-        .mobnav-mobile-toggle-lines::before,
-        .mobnav-mobile-toggle-lines::after {
-          content: "";
-          position: absolute;
-          left: 0;
-        }
-
-        .mobnav-mobile-toggle-lines::before { top: -5px; }
-        .mobnav-mobile-toggle-lines::after { top: 5px; }
       }
     `;
 
@@ -96,12 +72,12 @@ window.__ModuleLoader__.load({
         {
           type: "button",
           className: "mobnav-mobile-toggle",
-          "aria-label": "Open sidebar",
-          title: "Open sidebar",
+          "aria-label": "Toggle sidebar",
+          title: "Toggle sidebar",
           onClick: () => layout.toggleSidebar(),
         },
-        React.createElement("span", {
-          className: "mobnav-mobile-toggle-lines",
+        React.createElement(IconPanelLeftOutline16, {
+          size: 18,
           "aria-hidden": true,
         }),
       );
@@ -115,13 +91,13 @@ window.__ModuleLoader__.load({
       document.head.appendChild(tag);
       ctx.effect(() => () => tag.remove(), "mobile-sidebar: styles");
 
-      ctx.slots.inject("conversation.session.header.actions", () =>
+      ctx.slots.inject("shell.overlay", () =>
         ctx.slots.register(
           {
-            name: "conversation.session.header.actions",
+            name: "shell.overlay",
             id: "mobile-sidebar-toggle",
             order: -20,
-            label: "Open sidebar",
+            label: "Toggle sidebar",
           },
           () => React.createElement(MobileSidebarToggle, { layout: ctx.layout }),
         ),
