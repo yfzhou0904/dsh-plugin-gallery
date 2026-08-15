@@ -1,0 +1,29 @@
+{
+  "name": "@yfzhou/dsh-full-width-chat",
+  "description": "Makes the chat conversation fill the full available width instead of the fixed column cap.",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "lib/index.js",
+  "files": ["lib", "README.md", "LICENSE"],
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "platform": "web",
+      "inject": []
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yfzhou0904/dsh-plugin-gallery.git",
+    "directory": "plugins/full-width-chat"
+  },
+  "homepage": "https://github.com/yfzhou0904/dsh-plugin-gallery#readme",
+  "bugs": "https://github.com/yfzhou0904/dsh-plugin-gallery/issues",
+  "keywords": ["deepseek", "dsh", "cordis", "plugin", "chat", "layout"],
+  "publishConfig": { "access": "public" },
+  "license": "MIT"
+}

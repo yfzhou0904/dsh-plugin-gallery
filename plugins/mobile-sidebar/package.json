@@ -1,0 +1,29 @@
+{
+  "name": "@yfzhou/dsh-mobile-sidebar",
+  "description": "Hides the collapsed sidebar rail on mobile and adds a left-aligned hamburger trigger to the conversation title row.",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "lib/index.js",
+  "files": ["lib", "README.md", "LICENSE"],
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "platform": "web",
+      "inject": ["layout", "slots"]
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yfzhou0904/dsh-plugin-gallery.git",
+    "directory": "plugins/mobile-sidebar"
+  },
+  "homepage": "https://github.com/yfzhou0904/dsh-plugin-gallery#readme",
+  "bugs": "https://github.com/yfzhou0904/dsh-plugin-gallery/issues",
+  "keywords": ["deepseek", "dsh", "cordis", "plugin", "mobile", "sidebar"],
+  "publishConfig": { "access": "public" },
+  "license": "MIT"
+}
