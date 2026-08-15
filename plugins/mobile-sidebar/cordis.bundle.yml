@@ -1,0 +1,4 @@
+# Profile layer for @yfzhou/dsh-mobile-sidebar.
+- insert:
+    - id: mobile-sidebar
+      name: '@yfzhou/dsh-mobile-sidebar'

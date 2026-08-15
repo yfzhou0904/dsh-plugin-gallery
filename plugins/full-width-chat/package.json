@@ -1,16 +1,19 @@
 {
   "name": "@yfzhou/dsh-full-width-chat",
   "description": "Makes the chat conversation fill the full available width instead of the fixed column cap.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "main": "lib/index.js",
-  "files": ["lib", "README.md", "LICENSE"],
+  "files": ["lib", "README.md", "LICENSE", "cordis.bundle.yml"],
   "exports": {
     ".": "./lib/index.js",
     "./client": "./lib/client.js",
     "./package.json": "./package.json"
   },
   "dsh": {
+    "bundle": {
+      "patch": "./cordis.bundle.yml"
+    },
     "client": {
       "platform": "web",
       "inject": []

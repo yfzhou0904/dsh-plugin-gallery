@@ -9,13 +9,13 @@ Some Codex models emit optional `sandbox_permissions` and `justification` argume
 
 Other providers and sandbox modes retain DSH's native escalation behavior.
 
-## Activate
+## Install
 
-```yaml
-- insert:
-    - id: dsh-codex-moot-escalation
-      name: '@yfzhou/dsh-codex-moot-escalation'
+```bash
+dsh plugin --profile web add @yfzhou/dsh-codex-moot-escalation
 ```
+
+The package supplies its own DSH bundle row; do not add a separate `cordis.patch.yml` entry.
 
 ## Security scope
 

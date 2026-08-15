@@ -17,21 +17,21 @@ A personal collection of plugins for [DeepSeek Harness (DSH)](https://www.npmjs.
 
 ## Installation
 
-Packages will be installed into a DSH profile using the DSH plugin command:
+Install a plugin into a DSH profile using the DSH plugin command:
 
 ```bash
 dsh plugin --profile web add @yfzhou/dsh-mobile-sidebar
 ```
 
-A package must also have a row in the profile's `cordis.patch.yml` to activate it:
+Every gallery package is a self-contained DSH bundle. The command installs the dependency and automatically adds its `cordis.bundle.yml` patch to the profile's `dsh.profile.bundles` stack. Do not add a duplicate row to `cordis.patch.yml`.
 
-```yaml
-- insert:
-    - id: mobile-sidebar
-      name: '@yfzhou/dsh-mobile-sidebar'
+For local development, pass the plugin directory instead:
+
+```bash
+dsh plugin --profile web add ./plugins/mobile-sidebar
 ```
 
-See each plugin's README for its package name and row ID. Restart a persistent DSH service after changing its profile. Browser plugins also require a page refresh after first installation or upgrade.
+Upgrade installed plugins with `dsh plugin --profile web update`. Restart a persistent DSH service after changing its profile. Browser plugins also require a page refresh after first installation or upgrade.
 
 ## Development
 

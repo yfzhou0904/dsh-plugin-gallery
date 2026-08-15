@@ -4,13 +4,13 @@ Adds an estimated session cost in CNY before the standard DeepSeek Harness compo
 
 The estimate uses cumulative token projections and an embedded model-rate table. It currently recognizes selected DeepSeek V4 and GPT-5.6 models. Unknown models fall back to the DeepSeek V4 Flash rate, so this is an operational estimate rather than billing authority.
 
-## Activate
+## Install
 
-```yaml
-- insert:
-    - id: session-cost-statusline
-      name: '@yfzhou/dsh-session-cost-statusline'
+```bash
+dsh plugin --profile web add @yfzhou/dsh-session-cost-statusline
 ```
+
+The package supplies its own DSH bundle row; do not add a separate `cordis.patch.yml` entry.
 
 ## Runtime requirements
 

@@ -1,0 +1,4 @@
+# Profile layer for @yfzhou/dsh-session-cost-statusline.
+- insert:
+    - id: session-cost-statusline
+      name: '@yfzhou/dsh-session-cost-statusline'

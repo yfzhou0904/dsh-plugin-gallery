@@ -9,13 +9,13 @@ Changes the DSH composer keyboard behavior:
 
 The plugin intercepts only plain Enter in the conversation textarea. Cmd/Ctrl+Enter is left to DSH's own keyboard handler so submission continues through the normal session-aware path. It is client-only and has no host-side behavior.
 
-## Activate
+## Install
 
-```yaml
-- insert:
-    - id: composer-enter
-      name: '@yfzhou/dsh-composer-enter'
+```bash
+dsh plugin --profile web add @yfzhou/dsh-composer-enter
 ```
+
+The package supplies its own DSH bundle row; do not add a separate `cordis.patch.yml` entry.
 
 ## Runtime requirements
 

@@ -1,13 +1,18 @@
 {
   "name": "@yfzhou/dsh-codex-moot-escalation",
   "description": "Removes moot sandbox-escalation fields from Codex tool schemas when a DSH session already has danger-full-access.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "main": "lib/index.js",
-  "files": ["lib", "README.md", "LICENSE"],
+  "files": ["lib", "README.md", "LICENSE", "cordis.bundle.yml"],
   "exports": {
     ".": "./lib/index.js",
     "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.bundle.yml"
+    }
   },
   "repository": {
     "type": "git",

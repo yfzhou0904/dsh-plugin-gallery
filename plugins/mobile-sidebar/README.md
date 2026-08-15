@@ -4,13 +4,13 @@ A responsive navigation improvement for the DeepSeek Harness Web interface.
 
 On screens up to 767 px wide, it hides the otherwise space-consuming collapsed sidebar rail and places DSH's native sidebar toggle at the top left of the shell. The control remains available on both active conversations and the new-session screen. Desktop sidebar behavior is unchanged.
 
-## Activate
+## Install
 
-```yaml
-- insert:
-    - id: mobile-sidebar
-      name: '@yfzhou/dsh-mobile-sidebar'
+```bash
+dsh plugin --profile web add @yfzhou/dsh-mobile-sidebar
 ```
+
+The package supplies its own DSH bundle row; do not add a separate `cordis.patch.yml` entry.
 
 ## Runtime requirements
 

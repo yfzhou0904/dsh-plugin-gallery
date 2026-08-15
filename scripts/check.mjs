@@ -26,6 +26,11 @@ for (const dir of dirs) {
   }
   const files = ["package.json", "README.md", "lib/index.js"];
   if (pkg.dsh?.client) files.push("lib/client.js");
+  if (pkg.dsh?.bundle?.patch) {
+    if (typeof pkg.dsh.bundle.patch !== "string") throw new Error(`${pkg.name}: dsh.bundle.patch must be a string`);
+    await access(join(base, pkg.dsh.bundle.patch));
+    files.push(pkg.dsh.bundle.patch);
+  }
   for (const file of files) {
     const text = await readFile(join(base, file), "utf8");
     for (const value of forbidden) {

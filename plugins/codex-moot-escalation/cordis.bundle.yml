@@ -1,0 +1,4 @@
+# Profile layer for @yfzhou/dsh-codex-moot-escalation.
+- insert:
+    - id: dsh-codex-moot-escalation
+      name: '@yfzhou/dsh-codex-moot-escalation'

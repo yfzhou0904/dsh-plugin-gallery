@@ -2,13 +2,13 @@
 
 Makes the DeepSeek Harness conversation use the full available content width instead of the default fixed-width column.
 
-## Activate
+## Install
 
-```yaml
-- insert:
-    - id: full-width-chat
-      name: '@yfzhou/dsh-full-width-chat'
+```bash
+dsh plugin --profile web add @yfzhou/dsh-full-width-chat
 ```
+
+The package supplies its own DSH bundle row; do not add a separate `cordis.patch.yml` entry.
 
 ## Runtime requirements
 

@@ -1,0 +1,4 @@
+# Profile layer for @yfzhou/dsh-full-width-chat.
+- insert:
+    - id: full-width-chat
+      name: '@yfzhou/dsh-full-width-chat'
