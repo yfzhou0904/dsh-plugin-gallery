@@ -1,6 +1,6 @@
-# dsh-llm-codex-subscription
+# `@yfzhou/dsh-llm-codex-subscription`
 
-> 📦 npm:[dsh-llm-codex-subscription](https://www.npmjs.com/package/dsh-llm-codex-subscription)
+> 📦 npm:[@yfzhou/dsh-llm-codex-subscription](https://www.npmjs.com/package/@yfzhou%2Fdsh-llm-codex-subscription)
 > · 📚 GitHub:[yfzhou0904/dsh-plugin-gallery](https://github.com/yfzhou0904/dsh-plugin-gallery/tree/main/plugins/codex-subscription)
 > · 🏷️ 属于 [dsh-plugin](https://github.com/topics/dsh-plugin) 插件话题
 
@@ -53,7 +53,7 @@ test/smoke.mjs  端到端冒烟测试(只读,绝不写 auth.json)
 本机已安装 pnpm(`dsh plugin` 会转发给它)。安装已发布的包:
 
 ```powershell
-dsh plugin --profile web add dsh-llm-codex-subscription
+dsh plugin --profile web add @yfzhou/dsh-llm-codex-subscription
 ```
 
 本地开发直接加路径(pnpm 会以 `link:` 链接,改动即时生效):
@@ -70,7 +70,7 @@ dsh plugin --profile web add D:\CODE\dsh\dsh-llm-codex
 验证组合结果(不启动服务):
 
 ```powershell
-dsh --profile web --dump-config   # 应看到 "# == dsh-llm-codex-subscription" 与 llm-codex 行
+dsh --profile web --dump-config   # 应看到 "# == @yfzhou/dsh-llm-codex-subscription" 与 llm-codex 行
 ```
 
 重启 dsh 后,Web 模型选择器出现 **Codex (ChatGPT 订阅)** provider,插件清单页
@@ -86,8 +86,8 @@ llm-codex-subscription:
   proxy: http://127.0.0.1:7890
   account: personal
   accounts:
-    personal: /Users/you/.codex-personal/auth.json
-    work: /Users/you/.codex-work/auth.json
+    personal: ~/.codex-personal/auth.json
+    work: ~/.codex-work/auth.json
 ```
 
 也可用环境变量 `HTTPS_PROXY`(优先级:显式 `proxy` 配置 > `HTTPS_PROXY` >
@@ -103,8 +103,8 @@ llm-codex-subscription:
 llm-codex-subscription:
   account: personal
   accounts:
-    personal: /Users/you/.codex-personal/auth.json
-    work: /Users/you/.codex-work/auth.json
+    personal: ~/.codex-personal/auth.json
+    work: ~/.codex-work/auth.json
 ```
 
 每次请求都会读取所选文件；切换 `account` 后新的请求使用新账户，不需要复制回
@@ -131,9 +131,9 @@ dsh 的"插件库"即 npm registry:`dsh.bundle.patch` 声明就是插件身份�
 npm login
 npm publish            # 仓库目录内执行
 # 任何机器上:
-dsh plugin --profile web add dsh-llm-codex-subscription
+dsh plugin --profile web add @yfzhou/dsh-llm-codex-subscription
 dsh plugin --profile web update          # 升级所有 profile 插件
-dsh plugin --profile web remove dsh-llm-codex-subscription   # 移除
+dsh plugin --profile web remove @yfzhou/dsh-llm-codex-subscription   # 移除
 ```
 
 发布前检查:`files` 字段含 `lib` 与 `cordis.bundle.yml`;`dsh.bundle.patch` 指向的

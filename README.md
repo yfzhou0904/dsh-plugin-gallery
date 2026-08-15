@@ -14,6 +14,7 @@ A personal collection of plugins for [DeepSeek Harness (DSH)](https://www.npmjs.
 | [Session Cost Statusline](plugins/session-cost-statusline) | `@yfzhou/dsh-session-cost-statusline` | Web client | Adds an estimated CNY cost before the standard session statistics. |
 | [Composer Enter](plugins/composer-enter) | `@yfzhou/dsh-composer-enter` | Web client | Makes Enter insert newlines and Cmd/Ctrl+Enter submit. |
 | [Codex Moot Escalation](plugins/codex-moot-escalation) | `@yfzhou/dsh-codex-moot-escalation` | Host | Removes impossible escalation arguments for Codex sessions already running with unrestricted sandbox access. |
+| [Codex Subscription](plugins/codex-subscription) | `@yfzhou/dsh-llm-codex-subscription` | Host | Adds a Codex provider that reuses the local Codex CLI login for ChatGPT subscription models. |
 
 ## Installation
 
