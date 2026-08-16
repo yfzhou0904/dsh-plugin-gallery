@@ -1,0 +1,4 @@
+# Profile layer for @yfzhou/dsh-touch-tooltips.
+- insert:
+    - id: touch-tooltips
+      name: '@yfzhou/dsh-touch-tooltips'

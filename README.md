@@ -13,6 +13,7 @@ A personal collection of plugins for [DeepSeek Harness (DSH)](https://www.npmjs.
 | [Full-width Chat](plugins/full-width-chat) | `@yfzhou/dsh-full-width-chat` | Web client | Lets conversations use the full available content width. |
 | [Session Cost Statusline](plugins/session-cost-statusline) | `@yfzhou/dsh-session-cost-statusline` | Web client | Adds an estimated CNY cost before the standard session statistics. |
 | [Composer Enter](plugins/composer-enter) | `@yfzhou/dsh-composer-enter` | Web client | Makes Enter insert newlines and Cmd/Ctrl+Enter submit. |
+| [Touch Tooltips](plugins/touch-tooltips) | `@yfzhou/dsh-touch-tooltips` | Web client | Suppresses tooltip bubbles on touch devices, where a tap would otherwise leave them stuck on screen. |
 | [Codex Moot Escalation](plugins/codex-moot-escalation) | `@yfzhou/dsh-codex-moot-escalation` | Host | Removes impossible escalation arguments for Codex sessions already running with unrestricted sandbox access. |
 | [Codex Subscription](plugins/codex-subscription) | `@yfzhou/dsh-llm-codex-subscription` | Host | Adds a Codex provider that reuses the local Codex CLI login for ChatGPT subscription models. |
 
