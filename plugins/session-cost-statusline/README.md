@@ -4,7 +4,7 @@ Adds an estimated session cost in CNY before the standard DeepSeek Harness compo
 
 The plugin registers a durable `sessionCost` projection on the host. It folds each logged request step and prices each `assistant/message.usage` record using the model from its `request/header`. The client only renders that projection, so totals replay for existing sessions and remain correct when a session changes models.
 
-It currently recognizes selected DeepSeek V4 and GPT-5.6 models. Usage from an unknown model is deliberately omitted rather than priced with an unrelated fallback, so the displayed figure is a lower-bound operational estimate rather than billing authority.
+It currently recognizes selected DeepSeek V4 and GPT-5.6 models. Usage from an unknown model is deliberately omitted rather than priced with an unrelated fallback, so the displayed figure is a lower-bound operational estimate rather than billing authority. DeepSeek model ids that carry a deployment build tag (for example the Ark/ByteDance id `deepseek-v4-flash-ga-260731`) are normalized to their DeepSeek V4 family before pricing, so any build of a known family is priced.
 
 ## Install
 

@@ -50,6 +50,8 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
 
+  plugins/touch-tooltips: {}
+
 packages:
 
   '@deepseek-ai/cordis@4.0.1':

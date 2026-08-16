@@ -70,11 +70,20 @@ function isPeakBeijing(timestamp) {
     (minute >= 14 * 60 && minute < 18 * 60);
 }
 
+// DeepSeek model ids can carry a provider/deployment build tag. In particular
+// the Ark (ByteDance) deployment id is "deepseek-v4-flash-ga-260731" — the
+// same DeepSeek V4 Flash model, with a "-ga-<build>" suffix. Normalize any
+// such tag away so every build of a DeepSeek V4 family resolves to the
+// published pricing for that family. Non-DeepSeek ids are returned unchanged.
+function deepseekFamilyKey(model) {
+  return model.replace(/-ga-\d+$/, "");
+}
+
 function rateFor(model, timestamp) {
   const fixed = FIXED_RATES[model];
   if (fixed !== undefined) return fixed;
 
-  const schedule = DEEPSEEK_RATES[model];
+  const schedule = DEEPSEEK_RATES[deepseekFamilyKey(model)];
   if (schedule === undefined || !validTimestamp(timestamp)) return undefined;
   if (timestamp < DEEPSEEK_PRICING_EFFECTIVE_AT) return schedule.legacy;
   return isPeakBeijing(timestamp) ? schedule.peak : schedule.offPeak;
@@ -176,7 +185,10 @@ const projection = {
   // v3 pins the model to each step. This keeps replay correct when another
   // request changes the session header before an earlier message is assembled.
   // Old checkpoints are discarded and replayed by the projection cache.
-  stateVersion: 3,
+  // v4 normalizes DeepSeek GA build tags (e.g. ark "deepseek-v4-flash-ga-260731")
+  // to their published family pricing; bumping forces cached checkpoints that
+  // were priced with the unknown-model path (totalCny 0) to replay.
+  stateVersion: 4,
 };
 
 const name = "session-cost-statusline";
