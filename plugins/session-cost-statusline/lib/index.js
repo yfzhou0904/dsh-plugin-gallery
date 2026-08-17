@@ -11,9 +11,6 @@ import { z } from "zod";
 const MILLION = 1e6;
 const BEIJING_OFFSET_MS = 8 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
-// 2026-08-17 00:00:00 China Standard Time (UTC+08:00), as published by
-// DeepSeek for the new peak/off-peak V4 prices.
-const DEEPSEEK_PRICING_EFFECTIVE_AT = 1786896000000;
 
 const cnyPerMillion = (input, cacheRead, output) => ({
   input: input / MILLION,
@@ -29,18 +26,15 @@ const FIXED_RATES = {
   "gpt-5.6-luna": { input: 0.2 / 0.15 / MILLION, output: 1.2 / 0.15 / MILLION, cacheRead: 0.02 / 0.15 / MILLION, cacheWrite: 0.25 / 0.15 / MILLION },
 };
 
-// DeepSeek's pricing is effective-dated so replaying an old session does not
-// retroactively apply a later price change. Before the new schedule took
-// effect, the published V4 rates were Flash ¥1/¥0.02/¥2 and Pro ¥3/¥0.025/¥6
-// per million uncached-input/cache-hit/output tokens.
+// DeepSeek V4 uses the published time-of-day schedule: peak hours are
+// 09:00–12:00 and 14:00–18:00 Beijing, all other hours off-peak. There is no
+// legacy fixed-rate bucket anymore — every request is peak or off-peak.
 const DEEPSEEK_RATES = {
   "deepseek-v4-flash": {
-    legacy: cnyPerMillion(1.0, 0.02, 2.0),
     offPeak: cnyPerMillion(1.5, 0.05, 4.5),
     peak: cnyPerMillion(3.0, 0.10, 9.0),
   },
   "deepseek-v4-pro": {
-    legacy: cnyPerMillion(3.0, 0.025, 6.0),
     offPeak: cnyPerMillion(4.5, 0.15, 13.5),
     peak: cnyPerMillion(9.0, 0.30, 27.0),
   },
@@ -85,7 +79,6 @@ function rateFor(model, timestamp) {
 
   const schedule = DEEPSEEK_RATES[deepseekFamilyKey(model)];
   if (schedule === undefined || !validTimestamp(timestamp)) return undefined;
-  if (timestamp < DEEPSEEK_PRICING_EFFECTIVE_AT) return schedule.legacy;
   return isPeakBeijing(timestamp) ? schedule.peak : schedule.offPeak;
 }
 
@@ -188,7 +181,10 @@ const projection = {
   // v4 normalizes DeepSeek GA build tags (e.g. ark "deepseek-v4-flash-ga-260731")
   // to their published family pricing; bumping forces cached checkpoints that
   // were priced with the unknown-model path (totalCny 0) to replay.
-  stateVersion: 4,
+  // v5 drops the pre-2026-08-17 legacy fixed-rate bucket: every DeepSeek request
+  // is now peak or off-peak. Bumping forces checkpoints that were folded with
+  // the legacy path to re-fold with peak/off-peak only.
+  stateVersion: 5,
 };
 
 const name = "session-cost-statusline";
