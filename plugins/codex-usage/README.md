@@ -1,32 +1,10 @@
 # `@yfzhou/dsh-codex-usage`
 
-Shows the current Codex subscription usage inside Codex conversations.
-
-The plugin adds a compact **Codex usage** control to the composer only when the
-active session is routed through the `codex` provider. It is hidden for other
-providers and when no session is open. Clicking the control fetches the current
-quota on demand and shows remaining percentage plus the precise reset date and
-time in the browser's local timezone.
-
-## Requirements
-
-- DSH Web with the `codex` provider installed and configured.
-- A Codex CLI ChatGPT subscription credential in the configured account file.
-- Node.js 20 or newer on the DSH host.
-
-The host reads the account configured for the local DSH installation. The
-published package does not include credentials or tokens. If the Codex provider
-has an `account` plus `accounts` configuration, that selected account file is
-used; otherwise the standard Codex home auth file is used.
-
-The browser talks to the package's ordinary Host route at `/api/codex-usage`;
-it does not depend on dynamic Cordis `harness` globals. The Host request reuses the transport from
-`@yfzhou/dsh-llm-codex-subscription`, so it automatically follows the same
-proxy behavior as Codex model requests: an explicit
-`llm-codex-subscription.proxy` setting takes precedence, followed by
-`HTTPS_PROXY`/`https_proxy` and then `HTTP_PROXY`/`http_proxy`; `NO_PROXY` and
-`no_proxy` are honored. No extra usage-plugin proxy configuration is needed.
-The proxy is used only by the Host and is never sent to the browser.
+Adds a compact **Codex usage** control to the composer, shown only when the
+active session runs through the `codex` provider. Clicking it fetches your
+current subscription quota on demand — remaining percentage plus the reset time
+in the browser's local timezone — via the package's own `/api/codex-usage` host
+route. It never polls or refreshes in the background.
 
 ## Install
 
@@ -34,15 +12,18 @@ The proxy is used only by the Host and is never sent to the browser.
 dsh plugin --profile web add @yfzhou/dsh-codex-usage
 ```
 
-For local development:
+Restart a persistent DSH service, then refresh the browser.
 
-```bash
-dsh plugin --profile web add ./plugins/codex-usage
-```
+## Notes
 
-Restart a persistent DSH service after installation, then refresh the browser
-page. The usage request is manual only: the plugin does not poll or refresh in
-the background.
+Requires the `codex` provider configured with a Codex CLI subscription
+credential, and Node.js 20+ on the host. The host reads the account file that
+provider selects; no credentials are in the published package and none reach the
+browser. Requests reuse `@yfzhou/dsh-llm-codex-subscription`'s transport, so
+proxy behavior follows the Codex provider's own settings with no extra
+configuration.
+
+Tested with DSH `0.1.0-rc.6`.
 
 ## License
 

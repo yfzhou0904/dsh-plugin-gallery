@@ -1,10 +1,11 @@
 # `@yfzhou/dsh-session-cost-statusline`
 
-Adds an estimated session cost in CNY before the standard DeepSeek Harness composer statistics.
-
-The plugin registers a durable `sessionCost` projection on the host. It folds each logged request step and prices each `assistant/message.usage` record using the model from its `request/header`. The client only renders that projection, so totals replay for existing sessions and remain correct when a session changes models.
-
-It currently recognizes selected DeepSeek V4 and GPT-5.6 models. Usage from an unknown model is deliberately omitted rather than priced with an unrelated fallback, so the displayed figure is a lower-bound operational estimate rather than billing authority. DeepSeek model ids that carry a deployment build tag (for example the Ark/ByteDance id `deepseek-v4-flash-ga-260731`) are normalized to their DeepSeek V4 family before pricing, so any build of a known family is priced.
+Adds an estimated session cost in CNY before the standard DSH composer
+statistics. A durable host projection folds every logged request step and prices
+each usage record using the model from its own request header, so totals replay
+for existing sessions and stay correct across model switches. Usage from an
+unrecognized model is omitted rather than priced with an unrelated fallback,
+making the figure a lower-bound estimate, not billing authority.
 
 ## Install
 
@@ -12,18 +13,29 @@ It currently recognizes selected DeepSeek V4 and GPT-5.6 models. Usage from an u
 dsh plugin --profile web add @yfzhou/dsh-session-cost-statusline
 ```
 
-The package supplies its own DSH bundle row; do not add a separate `cordis.patch.yml` entry.
+The package supplies its own DSH bundle row; do not add a separate
+`cordis.patch.yml` entry.
 
-## Runtime requirements
+## Pricing
 
-- Host service: `sessionProjections`
-- Client service: `slots`
-- Client slot: `conversation.composer.dock`
-- Tested with DSH `0.1.0-rc.6`
+Selected DeepSeek V4 and GPT-5.6 models are recognized; DeepSeek ids carrying a
+build tag (e.g. `deepseek-v4-flash-ga-260731`) are normalized to their family.
+DeepSeek V4 uses the published [time-of-day
+schedule](https://api-docs.deepseek.com/zh-cn/quick_start/pricing) — peak is
+09:00–12:00 and 14:00–18:00 Beijing, everything else off-peak. Per million
+tokens (uncached input / cache-hit input / output):
 
-DeepSeek V4 uses the published time-of-day schedule from the [DeepSeek pricing documentation](https://api-docs.deepseek.com/zh-cn/quick_start/pricing): peak hours are 09:00–12:00 and 14:00–18:00 Beijing, with all other hours off-peak. Per million tokens, Flash is ¥1.50/¥0.05/¥4.50 off-peak and ¥3.00/¥0.10/¥9.00 peak; Pro is ¥4.50/¥0.15/¥13.50 off-peak and ¥9.00/¥0.30/¥27.00 peak (uncached input/cache-hit input/output). Every request is priced peak or off-peak — the pre-2026-08-17 legacy fixed rates are no longer applied.
+| Model | Off-peak | Peak |
+| --- | --- | --- |
+| Flash | ¥1.50 / ¥0.05 / ¥4.50 | ¥3.00 / ¥0.10 / ¥9.00 |
+| Pro | ¥4.50 / ¥0.15 / ¥13.50 | ¥9.00 / ¥0.30 / ¥27.00 |
 
-The fold prices each model request separately: model switches are attached to the step that uses the header, and every step selects peak/off-peak from its own persisted request start (`request/header`, or `step/start` when the header is unchanged), using Beijing time explicitly. It does not split a request that crosses a pricing boundary; all of that request's tokens use the bucket at request start. Pricing changes over time; review the embedded rate table before relying on the displayed amount.
+Each request picks its bucket from its own start time and is never split across
+a pricing boundary. Rates change; check the embedded table before relying on the
+number.
+
+Tested with DSH `0.1.0-rc.6`. Requires the `sessionProjections` host service,
+the `slots` client service, and the `conversation.composer.dock` slot.
 
 ## License
 

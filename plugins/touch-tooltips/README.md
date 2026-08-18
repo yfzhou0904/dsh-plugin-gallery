@@ -1,47 +1,24 @@
-# DSH Touch Tooltips
+# `@yfzhou/dsh-touch-tooltips`
 
-Suppresses DSH's hover/focus tooltip bubbles on touch devices.
-
-## The problem
-
-DSH's `Tooltip` component (from `@deepseek-ai/dsh-client-ui-primitives`) shows a
-bubble on `mouseenter` and `focus`, and only hides it on `mouseleave` or
-`blur`. On a phone, tapping a button fires a *synthetic* `mouseenter` plus
-`focus`, so the bubble appears — but nothing ever fires `mouseleave`/`blur`
-unless you tap empty space. The result is a tooltip that lingers on screen
-after the button has already done its job.
-
-## The fix
-
-Tooltips are a hover affordance and carry no meaning on a touchscreen, so this
-plugin simply hides them on coarse-pointer devices:
-
-```css
-@media (pointer: coarse) {
-  [role="tooltip"] {
-    display: none !important;
-  }
-}
-```
-
-The anchor's accessible name is still exposed to assistive technology, so
-accessibility is unaffected. Desktop hover tooltips are left untouched.
+On a phone, tapping a button fires synthetic `mouseenter`/`focus` but never
+`mouseleave`/`blur`, so a DSH tooltip appears and then lingers on screen until
+you tap empty space. Tooltips are a hover affordance and carry no meaning on a
+touchscreen, so this plugin hides `[role="tooltip"]` elements under
+`@media (pointer: coarse)`. The anchor's accessible name is still exposed to
+assistive technology, and desktop hover tooltips are untouched.
 
 ## Install
 
-```sh
+```bash
 dsh plugin --profile web add @yfzhou/dsh-touch-tooltips
 ```
 
-For local development:
+The package supplies its own DSH bundle row; do not add a separate
+`cordis.patch.yml` entry. Refresh the browser after installing.
 
-```sh
-dsh plugin --profile web add ./plugins/touch-tooltips
-```
+Tested with DSH `0.1.0-rc.6`; it keeps working as long as DSH renders tooltip
+bubbles with `role="tooltip"`.
 
-Browser plugins require a page refresh after first installation or upgrade.
+## License
 
-## Compatibility
-
-Targets DSH `0.1.0-rc.6`. It patches `role="tooltip"` elements, so it keeps
-working as long as DSH renders tooltip bubbles with that role.
+MIT
