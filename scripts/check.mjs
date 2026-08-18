@@ -4,6 +4,7 @@ import { execFileSync } from "node:child_process";
 
 const root = new URL("..", import.meta.url).pathname;
 const pluginsDir = join(root, "plugins");
+const presetsDir = join(root, "presets");
 const dirs = (await readdir(pluginsDir, { withFileTypes: true }))
   .filter((entry) => entry.isDirectory())
   .map((entry) => entry.name)
@@ -38,4 +39,28 @@ for (const dir of dirs) {
     }
   }
   console.log(`ok ${pkg.name}`);
+}
+
+const presetDirs = (await readdir(presetsDir, { withFileTypes: true }))
+  .filter((entry) => entry.isDirectory())
+  .map((entry) => entry.name)
+  .sort();
+const presetForbidden = ["/Users/", "/home/", "/root/", "BEGIN OPENSSH PRIVATE KEY", "api_key", "access_token"];
+for (const dir of presetDirs) {
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(dir)) throw new Error(`invalid preset id: ${dir}`);
+  const base = join(presetsDir, dir);
+  await access(join(base, "agent.cordis.yml"));
+  const composition = await readFile(join(base, "agent.cordis.yml"), "utf8");
+  if (!/^\s*-\s+id:/m.test(composition)) throw new Error(`${dir}: agent.cordis.yml must contain composition rows`);
+  const metadataPath = join(base, "preset.yml");
+  try { await access(metadataPath); } catch { /* metadata is optional */ }
+  const files = await readdir(base, { withFileTypes: true });
+  for (const file of files) {
+    if (!file.isFile()) continue;
+    const text = await readFile(join(base, file.name), "utf8");
+    for (const value of presetForbidden) {
+      if (text.toLowerCase().includes(value.toLowerCase())) throw new Error(`${dir}: forbidden private string ${value} in ${file.name}`);
+    }
+  }
+  console.log(`ok preset ${dir}`);
 }

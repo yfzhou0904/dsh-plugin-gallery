@@ -35,6 +35,10 @@ dsh plugin --profile web add ./plugins/mobile-sidebar
 
 Upgrade installed plugins with `dsh plugin --profile web update`. Restart a persistent DSH service after changing its profile. Browser plugins also require a page refresh after first installation or upgrade.
 
+## Personal presets
+
+Version-controlled personal agent compositions live under [`presets/`](presets/). They are separate from publishable plugins because DSH discovers them as complete directories under `$DSH_HOME/.agent-presets`. See [`presets/README.md`](presets/README.md) for the local symlink setup and portability notes.
+
 ## Development
 
 This is a pnpm workspace with one independently publishable package per directory.
