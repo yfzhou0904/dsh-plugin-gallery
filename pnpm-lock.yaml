@@ -34,7 +34,14 @@ importers:
         specifier: ^3.3.2
         version: 3.3.2
 
-  plugins/codex-usage: {}
+  plugins/codex-usage:
+    dependencies:
+      https-proxy-agent:
+        specifier: ^7.0.6
+        version: 7.0.6
+      node-fetch:
+        specifier: ^3.3.2
+        version: 3.3.2
 
   plugins/composer-enter: {}
 

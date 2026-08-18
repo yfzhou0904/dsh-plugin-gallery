@@ -6,11 +6,21 @@ const CODEX_HOME_ENV = "CODEX_HOME";
 const AUTH_FILE_NAME = "auth.json";
 const USAGE_URL = "https://chatgpt.com/backend-api/wham/usage";
 
-function authFileFrom(settings) {
+function configFrom(settings) {
   const config = settings?.get(SETTINGS_NS);
+  return config !== null && typeof config === "object" ? config : undefined;
+}
+
+function authFileFrom(settings) {
+  const config = configFrom(settings);
   if (config?.account && config?.accounts?.[config.account]) return config.accounts[config.account];
   if (typeof config?.authFile === "string" && config.authFile.length > 0) return config.authFile;
   return undefined;
+}
+
+function proxyFrom(settings) {
+  const proxy = configFrom(settings)?.proxy;
+  return typeof proxy === "string" && proxy.trim().length > 0 ? proxy.trim() : undefined;
 }
 
 function windowOf(value, fallbackLabel) {
@@ -63,16 +73,33 @@ async function readUsage(settings, subprocess, timer) {
   try {
     const node = await subprocess.resolveExecutable("node");
     const authFile = authFileFrom(settings);
+    const proxy = proxyFrom(settings);
     const script = `import { readFile } from 'node:fs/promises';
-import os from 'node:os';
-import path from 'node:path';
-const authFile = ${JSON.stringify(authFile)} ?? path.join(process.env[${JSON.stringify(CODEX_HOME_ENV)}] ?? path.join(os.homedir(), '.codex'), ${JSON.stringify(AUTH_FILE_NAME)});
-const auth = JSON.parse(await readFile(authFile, 'utf8'));
-const token = auth?.tokens?.access_token;
-const accountId = auth?.tokens?.account_id;
-if (typeof token !== 'string' || token.length === 0) throw new Error('missing access token');
-const response = await fetch(${JSON.stringify(USAGE_URL)}, { headers: { authorization: 'Bearer ' + token, accept: 'application/json', ...(accountId ? { 'chatgpt-account-id': accountId } : {}) } });
-process.stdout.write(JSON.stringify({ status: response.status, body: await response.text() }));`;
+ import os from 'node:os';
+ import path from 'node:path';
+ const authFile = ${JSON.stringify(authFile)} ?? path.join(process.env[${JSON.stringify(CODEX_HOME_ENV)}] ?? path.join(os.homedir(), '.codex'), ${JSON.stringify(AUTH_FILE_NAME)});
+ const auth = JSON.parse(await readFile(authFile, 'utf8'));
+ const token = auth?.tokens?.access_token;
+ const accountId = auth?.tokens?.account_id;
+ if (typeof token !== 'string' || token.length === 0) throw new Error('missing access token');
+ const targetUrl = ${JSON.stringify(USAGE_URL)};
+ const proxyUrl = ${JSON.stringify(proxy)} ?? process.env.HTTPS_PROXY ?? process.env.https_proxy ?? process.env.HTTP_PROXY ?? process.env.http_proxy;
+ const noProxy = process.env.NO_PROXY ?? process.env.no_proxy ?? '';
+ const target = new URL(targetUrl);
+ const hostname = target.hostname.toLowerCase();
+ const bypassProxy = noProxy.split(',').map((item) => item.trim().toLowerCase()).filter(Boolean).some((item) => item === '*' || item === hostname || (item.startsWith('*') && hostname.endsWith(item.slice(1))) || (item.startsWith('.') && hostname.endsWith(item)));
+ const requestInit = { headers: { authorization: 'Bearer ' + token, accept: 'application/json', ...(accountId ? { 'chatgpt-account-id': accountId } : {}) } };
+ let response;
+ if (proxyUrl && !bypassProxy) {
+   const proxyMod = await import('https-proxy-agent');
+   const HttpsProxyAgent = proxyMod.HttpsProxyAgent ?? proxyMod.default?.HttpsProxyAgent;
+   const { default: nodeFetch } = await import('node-fetch');
+   if (typeof HttpsProxyAgent !== 'function' || typeof nodeFetch !== 'function') throw new Error('proxy transport dependencies unavailable');
+   response = await nodeFetch(targetUrl, { ...requestInit, agent: new HttpsProxyAgent(proxyUrl) });
+ } else {
+   response = await fetch(targetUrl, requestInit);
+ }
+ process.stdout.write(JSON.stringify({ status: response.status, body: await response.text() }));`;
     const child = subprocess.spawn({
       argv: [node, "--input-type=module", "--eval", script],
       cwd: process.cwd(),
@@ -87,10 +114,11 @@ process.stdout.write(JSON.stringify({ status: response.status, body: await respo
     const result = await child.done;
     cancelStop();
     const output = child.collected.stdout?.readFrom(0).text ?? "";
+    const stderr = child.collected.stderr?.readFrom(0).text.trim() ?? "";
     if (result.exitCode !== 0) {
       return {
         status: "error",
-        message: `Codex usage request failed (subprocess exit ${String(result.exitCode)}, signal ${String(result.signal)})`,
+        message: `Codex usage request failed (subprocess exit ${String(result.exitCode)}, signal ${String(result.signal)})${stderr ? `: ${stderr.slice(-500)}` : ""}`,
       };
     }
     let envelope;
