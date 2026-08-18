@@ -9,7 +9,7 @@ const dirs = (await readdir(pluginsDir, { withFileTypes: true }))
   .map((entry) => entry.name)
   .sort();
 
-const forbidden = ["@deepseek-ai/dsh-mobile-sidebar", "@deepseek-ai/dsh-full-width-chat", "@deepseek-ai/dsh-session-cost-statusline", "@deepseek-ai/dsh-codex-moot-escalation", "@deepseek-ai/dsh-composer-enter", "/Users/", "/home/", "/root/"];
+const forbidden = ["@deepseek-ai/dsh-mobile-sidebar", "@deepseek-ai/dsh-full-width-chat", "@deepseek-ai/dsh-session-cost-statusline", "@deepseek-ai/dsh-codex-moot-escalation", "/Users/", "/home/", "/root/"];
 
 for (const dir of dirs) {
   const base = join(pluginsDir, dir);
