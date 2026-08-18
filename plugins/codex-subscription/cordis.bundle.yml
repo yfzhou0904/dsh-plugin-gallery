@@ -1,11 +1,13 @@
-# @yfzhou/dsh-llm-codex-subscription bundle patch —— 随包分发的 profile 层。
+# @yfzhou/dsh-llm-codex-subscription bundle patch — the profile layer shipped
+# with the package.
 #
-# 由 `dsh plugin --profile <name> add @yfzhou/dsh-llm-codex-subscription` 自动挂载:
-# reconcile 发现包声明了 dsh.bundle 后,会自动把本包加入
-# profile package.json 的 dsh.profile.bundles 层栈,无需手工编辑
-# cordis.patch.yml。
+# `dsh plugin --profile <name> add @yfzhou/dsh-llm-codex-subscription` mounts it
+# automatically: once reconcile sees the package declares dsh.bundle, it adds
+# this package to the dsh.profile.bundles stack in the profile's package.json,
+# with no need to edit cordis.patch.yml by hand.
 #
-# 机器相关的配置(如 proxy)请放 settings.yaml 的 `llm-codex-subscription:` 段,不进本文件。
+# Machine-specific settings (a proxy, for example) belong in the
+# `llm-codex-subscription:` section of settings.yaml, not in this file.
 - insert:
     - id: llm-codex-subscription
       name: '@yfzhou/dsh-llm-codex-subscription'

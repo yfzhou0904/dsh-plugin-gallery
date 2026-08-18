@@ -1,7 +1,7 @@
 {
   "name": "@yfzhou/dsh-llm-codex-subscription",
-  "version": "0.1.3",
-  "description": "DSH LLM 适配器插件:复用 Codex CLI 本地登录凭证(~/.codex/auth.json)在 DSH 中直接使用 ChatGPT 订阅模型",
+  "version": "0.1.4",
+  "description": "Reuses the Codex CLI login in ~/.codex/auth.json so DSH can use ChatGPT subscription models without an API key.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -21,15 +21,7 @@
   "scripts": {
     "test": "node test/serialize.mjs"
   },
-  "keywords": [
-    "dsh",
-    "deepseek-harness",
-    "cordis",
-    "llm",
-    "adapter",
-    "codex",
-    "chatgpt"
-  ],
+  "keywords": ["deepseek", "deepseek-harness", "dsh", "cordis", "llm", "adapter", "codex", "chatgpt"],
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -38,7 +30,6 @@
   },
   "homepage": "https://github.com/yfzhou0904/dsh-plugin-gallery#readme",
   "bugs": "https://github.com/yfzhou0904/dsh-plugin-gallery/issues",
-  "keywords": ["deepseek", "dsh", "cordis", "llm", "adapter", "codex", "chatgpt"],
   "publishConfig": { "access": "public" },
   "dsh": {
     "bundle": {

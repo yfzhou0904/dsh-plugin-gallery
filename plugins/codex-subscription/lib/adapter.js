@@ -1,8 +1,9 @@
 /**
- * CodexAdapter:复用 Codex CLI 本地凭证的 LLM 适配器。
+ * CodexAdapter: an LLM adapter that reuses the Codex CLI's local credentials.
  *
- * 传输层与 dsh-llm-deepseek 同构:fetch + SSE → harness StreamChunk;
- * 凭证按请求解析(auth.json 热跟随),401 时刷新订阅令牌并重试一次。
+ * The transport is structured like dsh-llm-deepseek's: fetch + SSE -> harness
+ * StreamChunk. Credentials are resolved per request, so auth.json is followed
+ * live, and a 401 refreshes the subscription token and retries once.
  */
 
 import {
@@ -40,7 +41,7 @@ function requestId(headers) {
   return value === null || value.length === 0 ? undefined : ProviderRequestId(value);
 }
 
-/** 把 HTTP 状态映射为稳定错误码(与 dsh-llm-deepseek 同 taxonomy)。 */
+/** Map an HTTP status to a stable error code, using the same taxonomy as dsh-llm-deepseek. */
 function httpErrorCode(status, error) {
   if (status === 401 || status === 403) return 'AUTH';
   const detail = [error?.code, error?.type, error?.message].filter(Boolean).join(' ');
@@ -52,11 +53,13 @@ function httpErrorCode(status, error) {
 
 export class CodexAdapter extends LlmAdapter {
   /**
-   * @param options - `() => resolved config`,每次请求重新求值以支持设置热更新。
-   * @param credentials - CodexCredentials 实例。
-   * @param transport - `() => Promise<{ fetch, toWebStream }>` 传输对象工厂(代理支持);
-   *   缺省按 options 自动构造(同样感知 proxy 配置)。
-   * @param fetchImpl - 可注入的 fetch(测试用),覆盖 transport。
+   * @param options - `() => resolved config`, re-evaluated per request so
+   *   hot-reloaded settings take effect.
+   * @param credentials - A CodexCredentials instance.
+   * @param transport - `() => Promise<{ fetch, toWebStream }>`, the transport
+   *   factory that adds proxy support. Built from options by default, which is
+   *   equally aware of the proxy config.
+   * @param fetchImpl - An injectable fetch for tests, overriding transport.
    */
   constructor({ options, credentials, transport, fetchImpl, attachments }) {
     super();
@@ -69,11 +72,11 @@ export class CodexAdapter extends LlmAdapter {
   }
 
   providerInfo(provider) {
-    return { id: provider, name: 'Codex (ChatGPT 订阅)' };
+    return { id: provider, name: 'Codex (ChatGPT subscription)' };
   }
 
   providerRetryPolicy() {
-    return undefined; // 使用 harness 的默认重试策略
+    return undefined; // use the harness's default retry policy
   }
 
   async listModels(provider) {
@@ -101,8 +104,9 @@ export class CodexAdapter extends LlmAdapter {
       name: entry?.name ?? model,
       inputModalities: ['text', 'image'],
       context: { contextWindow: entry?.contextWindow ?? 272_000 },
-      // ChatGPT 订阅后端不支持 max_output_tokens(HTTP 400 "Unsupported parameter"),
-      // 因此订阅模式不物化输出上限(用后端默认);仅官方 API key 模式物化。
+      // The ChatGPT subscription backend rejects max_output_tokens (HTTP 400
+      // "Unsupported parameter"), so subscription mode does not materialize an
+      // output cap and takes the backend default; only API key mode sets one.
       ...(creds.mode === 'apikey'
         ? { defaultMaxTokens: entry?.maxTokens ?? config.maxTokens ?? DEFAULT_MAX_TOKENS }
         : {}),
@@ -161,13 +165,13 @@ export class CodexAdapter extends LlmAdapter {
         try {
           await iterator.return();
         } catch {
-          // 传输层清理失败可忽略
+          // a failed transport cleanup is safe to ignore
         }
       }
       try {
         watchdog[Symbol.dispose]?.();
       } catch {
-        // 计时器清理失败可忽略
+        // a failed timer cleanup is safe to ignore
       }
     }
   }
@@ -179,9 +183,11 @@ export class CodexAdapter extends LlmAdapter {
 
     while (true) {
       const creds = await this.credentials.current();
-      // ChatGPT 订阅后端是 Responses 协议的受限实现,以下标准字段会被拒绝
-      // (HTTP 400 "Unsupported parameter: …"):max_output_tokens / temperature / stop。
-      // 订阅模式一律剥离,改用后端默认;官方 API key 模式不受影响。
+      // The ChatGPT subscription backend implements only a subset of the
+      // Responses protocol and rejects these standard fields with HTTP 400
+      // "Unsupported parameter: ...": max_output_tokens, temperature, stop.
+      // Subscription mode strips them all and takes the backend defaults;
+      // official API key mode is unaffected.
       if (creds.mode === 'chatgpt') {
         delete body.max_output_tokens;
         delete body.temperature;
@@ -219,7 +225,7 @@ export class CodexAdapter extends LlmAdapter {
         response = await doFetch(url, { method: 'POST', headers, body: payload, signal });
       } catch (error) {
         if (signal.aborted) throw error;
-        throw new LlmError(`Codex API 请求 ${url} 失败`, 'TRANSPORT', { cause: error });
+        throw new LlmError(`The Codex API request to ${url} failed`, 'TRANSPORT', { cause: error });
       }
 
       if (!response.ok) {
@@ -234,14 +240,14 @@ export class CodexAdapter extends LlmAdapter {
             message = providerError.detail;
           }
         } catch {
-          // 保留默认消息
+          // keep the default message
         }
         const delay = providerRetryAfterMs(response.headers.get('retry-after'));
         const id = requestId(response.headers);
 
         if (response.status === 401 && creds.mode === 'chatgpt' && !retried) {
           retried = true;
-          await this.credentials.refresh(); // 刷新失败会抛 AUTH
+          await this.credentials.refresh(); // a failed refresh throws AUTH
           continue;
         }
 
@@ -252,7 +258,7 @@ export class CodexAdapter extends LlmAdapter {
         });
       }
 
-      if (!response.body) throw new LlmError('Codex API 返回了空响应体', 'EMPTY_RESPONSE');
+      if (!response.body) throw new LlmError('The Codex API returned an empty response body', 'EMPTY_RESPONSE');
       yield* translate(parseSse(response.body, onComment));
       return;
     }

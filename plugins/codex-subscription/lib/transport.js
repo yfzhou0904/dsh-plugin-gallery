@@ -1,19 +1,22 @@
 /**
- * 传输层:可选 HTTP CONNECT 代理(Clash 等)。
+ * Transport layer: optional HTTP CONNECT proxy (Clash and friends).
  *
- * 背景:Node 的原生 fetch(undici)不读取系统代理/代理环境变量,而 ChatGPT
- * 后端通常需要走本地代理。部署依赖树中已有 node-fetch + https-proxy-agent,
- * 这里组合它们:配置了代理时经 CONNECT 隧道转发,否则直接用原生 fetch。
+ * Background: Node's native fetch (undici) does not read system proxy settings
+ * or proxy environment variables, while the ChatGPT backend usually has to go
+ * through a local proxy. node-fetch and https-proxy-agent are already in the
+ * deployment dependency tree, so this module combines them: requests go through
+ * a CONNECT tunnel when a proxy is configured, and through native fetch
+ * otherwise.
  *
- * 代理解析优先级:显式配置 proxy > HTTPS_PROXY/https_proxy > HTTP_PROXY/http_proxy;
- * NO_PROXY 命中的主机直连。
+ * Proxy resolution order: explicit `proxy` config > HTTPS_PROXY/https_proxy >
+ * HTTP_PROXY/http_proxy; hosts matching NO_PROXY connect directly.
  */
 
 import { Readable } from 'node:stream';
 
 import { LlmError } from '@deepseek-ai/dsh-llm';
 
-/** 解析生效的代理地址;无代理返回 undefined。 */
+/** Resolve the effective proxy address; undefined when there is no proxy. */
 export function resolveProxyUrl(config) {
   const explicit =
     typeof config?.proxy === 'string' && config.proxy.trim().length > 0 ? config.proxy.trim() : undefined;
@@ -27,7 +30,7 @@ export function resolveProxyUrl(config) {
   return envProxy.trim();
 }
 
-/** NO_PROXY 判定:逗号分隔条目,支持精确 host 与 *.suffix。 */
+/** NO_PROXY matching: comma-separated entries, supporting an exact host and *.suffix. */
 export function shouldBypassProxy(hostname, noProxyValue) {
   if (typeof noProxyValue !== 'string' || noProxyValue.trim().length === 0) return false;
   const host = String(hostname ?? '').toLowerCase();
@@ -41,14 +44,14 @@ export function shouldBypassProxy(hostname, noProxyValue) {
   return false;
 }
 
-/** 把 fetch 响应体统一为 Web ReadableStream(node-fetch 的 body 是 Node Readable)。 */
+/** Normalize a fetch response body to a Web ReadableStream; node-fetch bodies are Node Readables. */
 export function toWebStream(body) {
   if (body === undefined || body === null) return body;
-  if (typeof body.pipeThrough === 'function') return body; // 原生 fetch:已是 Web ReadableStream
-  return Readable.toWeb(body); // node-fetch:Node Readable → Web ReadableStream
+  if (typeof body.pipeThrough === 'function') return body; // native fetch: already a Web ReadableStream
+  return Readable.toWeb(body); // node-fetch: Node Readable -> Web ReadableStream
 }
 
-/** 根据配置构造传输对象 { fetch, toWebStream }。 */
+/** Build the transport object { fetch, toWebStream } from config. */
 export async function createTransport(config) {
   const proxyUrl = resolveProxyUrl(config);
   if (proxyUrl === undefined) {
@@ -72,7 +75,7 @@ export async function createTransport(config) {
     return { fetch: proxyFetch, toWebStream };
   } catch (error) {
     throw new LlmError(
-      `已配置代理 ${proxyUrl},但加载 https-proxy-agent / node-fetch 失败:${error?.message ?? error}`,
+      `Proxy ${proxyUrl} is configured, but loading https-proxy-agent / node-fetch failed: ${error?.message ?? error}`,
       'TRANSPORT',
       { cause: error },
     );

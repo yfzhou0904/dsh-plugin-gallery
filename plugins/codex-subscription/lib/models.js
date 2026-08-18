@@ -1,6 +1,7 @@
 /**
- * 模型目录:实时拉取 ChatGPT 后端的 /codex/models,失败时依次回退到
- * `~/.codex/models_cache.json`(codex CLI/桌面端缓存)与内置静态列表。
+ * Model catalog: fetched live from the ChatGPT backend's /codex/models, falling
+ * back on failure to `~/.codex/models_cache.json` (the codex CLI/desktop cache)
+ * and then to a built-in static list.
  */
 
 import { readFile } from 'node:fs/promises';
@@ -17,7 +18,7 @@ import {
 
 const DEFAULT_EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max', 'ultra'];
 
-/** 内置兜底模型目录(与用户 models_cache.json 及 codex 发布节奏对齐)。 */
+/** Built-in fallback catalog, tracking the user's models_cache.json and codex release cadence. */
 export const STATIC_MODELS = [
   { id: 'gpt-5.6-sol', name: 'GPT-5.6-Sol' },
   { id: 'gpt-5.6-luna', name: 'GPT-5.6-Luna' },
@@ -29,12 +30,12 @@ export const STATIC_MODELS = [
   { id: 'o4-mini', name: 'O4-Mini' },
 ];
 
-/** GPT-5.6 luna/sol/terra 的硬上下文;其余模型走通用窗口。 */
+/** Hard-coded context for GPT-5.6 luna/sol/terra; every other model uses the generic window. */
 export function contextWindowFor(modelId) {
   return /^gpt-5\.6/.test(modelId ?? '') ? GPT_5_6_CONTEXT_WINDOW : DEFAULT_CONTEXT_WINDOW;
 }
 
-/** 读取 ~/.codex/models_cache.json(Codex 缓存的最新模型目录)。 */
+/** Read ~/.codex/models_cache.json, the latest catalog Codex has cached. */
 export async function readModelsCacheFile(file) {
   let raw;
   try {
@@ -73,7 +74,7 @@ export async function readModelsCacheFile(file) {
   }
 }
 
-/** 从 ChatGPT 后端拉取实时模型目录(GET {base}/codex/models)。任何失败返回 null。 */
+/** Fetch the live catalog from the ChatGPT backend (GET {base}/codex/models). Returns null on any failure. */
 export async function discoverModelsLive(creds, clientVersion, signal, transport) {
   try {
     const url = new URL(`${creds.baseURL}/codex/models`);
@@ -120,7 +121,7 @@ export async function discoverModelsLive(creds, clientVersion, signal, transport
   }
 }
 
-/** 给目录条目补全上下文/输出上限/推理等级等缺省值。 */
+/** Fill in defaults on a catalog entry: context, output cap, reasoning levels. */
 export function completeEntry(entry) {
   const contextWindow = entry.contextWindow ?? contextWindowFor(entry.id);
   const maxTokens = Math.min(entry.maxTokens ?? DEFAULT_MAX_TOKENS, contextWindow);
@@ -135,8 +136,9 @@ export function completeEntry(entry) {
 }
 
 /**
- * 组装最终目录,优先级:显式 staticModels 配置 > 实时发现 > models_cache.json > 内置列表。
- * @returns 去重后的完整条目列表。
+ * Assemble the final catalog. Precedence: explicit staticModels config > live
+ * discovery > models_cache.json > built-in list.
+ * @returns The full list of entries, deduplicated.
  */
 export async function buildCatalog(creds, config, signal, transport) {
   let entries = null;
@@ -169,7 +171,7 @@ export async function buildCatalog(creds, config, signal, transport) {
   return out;
 }
 
-/** 供 adapter 使用的推理等级展示元数据。 */
+/** Reasoning-level display metadata for the adapter. */
 export function reasoningInfo(entry) {
   return {
     efforts: entry.efforts.map((effort) => ({ id: ReasoningEffortId(effort), name: effort })),

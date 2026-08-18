@@ -1,7 +1,8 @@
 /**
- * 把 Responses API 的 SSE 事件流翻译为 harness StreamChunk。
+ * Translate the Responses API's SSE event stream into harness StreamChunks.
  *
- * 事件词汇(ChatGPT 订阅后端与官方 Responses API 一致):
+ * Event vocabulary, identical between the ChatGPT subscription backend and the
+ * official Responses API:
  * - response.output_item.added / .done
  * - response.output_text.delta / .done
  * - response.refusal.delta
@@ -10,13 +11,14 @@
  * - response.completed / response.done / response.incomplete / response.failed
  * - response.usage / error
  *
- * 块(block)规则:推理、正文、工具调用各占一个独立块;块按首次 delta 惰性
- * 打开,在 output_item.done 或终结事件时收尾。usage 与 finish 永远最后发出。
+ * Block rules: reasoning, body text, and tool calls each get their own block.
+ * A block opens lazily on its first delta and closes at output_item.done or at
+ * a terminal event. usage and finish are always emitted last.
  */
 
 import { CallId, LlmError, EMPTY_RESPONSE_CODE } from '@deepseek-ai/dsh-llm';
 
-/** 把 wire usage 折成 harness 的 disjoint TokenUsage(cached 从 input 中拆出)。 */
+/** Fold wire usage into the harness's disjoint TokenUsage, splitting cached out of input. */
 export function mapUsage(usage) {
   if (!usage || typeof usage !== 'object') return undefined;
   const cached = usage.input_tokens_details?.cached_tokens;
@@ -29,7 +31,7 @@ export function mapUsage(usage) {
   };
 }
 
-/** 收尾一个块,组装最终 ContentBlock。 */
+/** Close a block, assembling the final ContentBlock. */
 function closeBlock(block) {
   switch (block.kind) {
     case 'reasoning':
@@ -42,7 +44,7 @@ function closeBlock(block) {
   }
 }
 
-/** 从输出项里提取 function_call 的 call_id/name。 */
+/** Extract a function_call's call_id and name from an output item. */
 function functionCallMeta(item) {
   if (!item || typeof item !== 'object') return { callId: undefined, name: undefined };
   return {
@@ -52,15 +54,15 @@ function functionCallMeta(item) {
 }
 
 /**
- * 消费 SSE data 载荷并产出 StreamChunk。
- * @param payloads - parseSse 产出的 JSON 载荷(自然结束,无 [DONE])。
+ * Consume SSE data payloads and yield StreamChunks.
+ * @param payloads - JSON payloads from parseSse; the stream just ends, with no [DONE].
  */
 export async function* translate(payloads) {
   let nextIndex = 0;
   const blocks = new Map(); // key -> block;key = item_id(function_call) | "reasoning:"+item_id | "text:"+item_id
   const order = [];
   let pendingUsage;
-  let lastKind; // 最后一个关闭的块类型(text/reasoning/tool-call)
+  let lastKind; // kind of the most recently closed block (text/reasoning/tool-call)
 
   const openBlock = (kind, callId, name) => {
     const block = { index: nextIndex++, kind, text: '', callId, name };
@@ -68,7 +70,7 @@ export async function* translate(payloads) {
     return block;
   };
 
-  /** 取 key 对应的块;没有则惰性打开并先发 block-start。 */
+  /** Get the block for a key, lazily opening it and emitting block-start first. */
   const ensureBlock = function* (key, kind, callId, name) {
     let block = blocks.get(key);
     if (!block) {
@@ -79,7 +81,7 @@ export async function* translate(payloads) {
     return block;
   };
 
-  /** 关闭指定 keys 的块并逐个发 block-end。 */
+  /** Close the blocks for the given keys, emitting a block-end for each. */
   const closeBlocks = function* (keys) {
     for (const key of keys) {
       const block = blocks.get(key);
@@ -90,7 +92,7 @@ export async function* translate(payloads) {
     }
   };
 
-  /** 终结流程:关闭所有剩余块 → usage → finish(顺序固定)。 */
+  /** Termination sequence, in fixed order: close every remaining block -> usage -> finish. */
   const finish = function* (reason) {
     yield* closeBlocks([...blocks.keys()]);
     if (pendingUsage !== undefined) yield { type: 'usage', usage: pendingUsage };
@@ -119,11 +121,11 @@ export async function* translate(payloads) {
         const item = event.item;
         if (!item || typeof item !== 'object') break;
         if (item.type === 'function_call') {
-          // 工具调用在 item 建立时开块(call_id/name 已知);arguments 由后续 delta 填充
+          // A tool call opens its block when the item appears, since call_id/name are known; arguments arrive as deltas
           const { callId, name } = functionCallMeta(item);
           yield* ensureBlock(item.id, 'tool-call', callId, name);
         }
-        // message 项不在此处开块:等第一个 delta 惰性打开,避免空块
+        // A message item does not open here: it waits for its first delta, avoiding empty blocks
         break;
       }
 
@@ -173,7 +175,7 @@ export async function* translate(payloads) {
           const { callId, name } = functionCallMeta(item);
           const block = blocks.get(item.id);
           if (!block) {
-            // 极端情况:无任何 delta 的完整工具调用 → 开块并立即收尾
+            // Edge case: a complete tool call with no deltas at all -> open the block and close it immediately
             yield* ensureBlock(item.id, 'tool-call', callId, name);
             const opened = blocks.get(item.id);
             if (typeof item.arguments === 'string') opened.text = item.arguments;
@@ -232,7 +234,7 @@ export async function* translate(payloads) {
       }
 
       default:
-        break; // response.created / content_part.* / output_text.done 等忽略
+        break; // ignore response.created, content_part.*, output_text.done, and friends
     }
   }
 

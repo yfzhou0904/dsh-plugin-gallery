@@ -1,20 +1,22 @@
 /**
- * dsh-llm-codex-subscription:在 DSH 中注册 `codex` LLM provider,复用 Codex CLI 本地
- * 登录凭证(~/.codex/auth.json),让 ChatGPT 订阅模型(gpt-5.6-sol 等)直接
- * 出现在 DSH 的模型选择器里。
+ * dsh-llm-codex-subscription: registers a `codex` LLM provider in DSH that
+ * reuses the Codex CLI's local login (~/.codex/auth.json), putting ChatGPT
+ * subscription models (gpt-5.6-sol and friends) straight into DSH's model
+ * picker.
  *
- * 组成方式(与 @deepseek-ai/dsh-llm-deepseek 同构):
+ * Composition (structured like @deepseek-ai/dsh-llm-deepseek):
  *   - id: llm-codex
  *     name: dsh-llm-codex
  *
- * 可选配置(composer 行 config 或 settings.yaml 的 `llm-codex-subscription:` 段,热更新):
- *   - clientVersion: codex wire 版本(默认 0.144.1)
- *   - writeBack:     刷新订阅令牌后是否写回 auth.json(默认 true)
- *   - authFile:      覆盖 auth.json 路径
- *   - account:       选择账户别名(从 accounts 映射解析)
- *   - accounts:      账户别名到 auth.json 路径的映射
- *   - modelsCacheFile: 覆盖 models_cache.json 路径
- *   - staticModels:  显式模型目录(覆盖自动发现)
+ * Optional config, hot-reloaded, from the composer row's config or the
+ * `llm-codex-subscription:` section of settings.yaml:
+ *   - clientVersion: codex wire version (default 0.144.1)
+ *   - writeBack:     write refreshed subscription tokens back to auth.json (default true)
+ *   - authFile:      override the auth.json path
+ *   - account:       select an account alias, resolved through the accounts map
+ *   - accounts:      map of account aliases to auth.json paths
+ *   - modelsCacheFile: override the models_cache.json path
+ *   - staticModels:  explicit model catalog, overriding discovery
  */
 
 import z from '@deepseek-ai/schemastery';
@@ -29,7 +31,7 @@ import { createTransport, resolveProxyUrl } from './transport.js';
 export const name = 'llm-codex';
 export const inject = ['llm', 'attachments'];
 
-/** 本插件唯一的 provider 路由。 */
+/** The only provider route this plugin serves. */
 export const PROVIDER = 'codex';
 
 const NS = settingsNamespace('llm-codex-subscription');
@@ -55,7 +57,7 @@ const Config = z.object({
   ),
 });
 
-/** 把原始配置(composer 行或设置段)解析为安全默认值填充的连接事实。 */
+/** Resolve raw config, from a composer row or the settings section, into connection facts with safe defaults. */
 function resolveOptions(raw) {
   const source = raw ?? {};
   const clientVersion =
@@ -112,16 +114,16 @@ export function apply(ctx, config) {
       return next;
     } catch (error) {
       if (lastGood === undefined) throw error;
-      ctx.logger?.error?.('llm-codex-subscription: 设置段无效,保留最后一次有效配置');
+      ctx.logger?.error?.('llm-codex-subscription: invalid settings section, keeping the last valid config');
       ctx.logger?.error?.(error);
       return lastGood;
     }
   };
 
-  // 先求值一次:配置非法时在装载期立刻失败(loud fail)
+  // Evaluate once up front so invalid config fails loudly at load time
   options();
 
-  // 传输对象按代理地址缓存;代理配置变化时自动重建
+  // The transport is cached per proxy address and rebuilt when the proxy config changes
   let transportCache = { key: undefined, promise: undefined };
   const getTransport = () => {
     const key = resolveProxyUrl(options()) ?? '';
@@ -140,7 +142,7 @@ export function apply(ctx, config) {
   ctx.llm.registerConfigurableProviders([
     {
       provider: PROVIDER,
-      displayName: 'Codex (ChatGPT 订阅)',
+      displayName: 'Codex (ChatGPT subscription)',
       settingsNs: NS,
       settingsPath: [],
     },
@@ -153,7 +155,7 @@ export function apply(ctx, config) {
       current = source;
     },
     onChange: () => {
-      // 设置段变化后重注册路由,保持注册事实与配置一致
+      // Re-register the route when the settings section changes, keeping registration in step with config
       registration.replace([PROVIDER]);
     },
   });
