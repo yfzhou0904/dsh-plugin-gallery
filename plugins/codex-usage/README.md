@@ -20,17 +20,12 @@ has an `account` plus `accounts` configuration, that selected account file is
 used; otherwise the standard Codex home auth file is used.
 
 The browser talks to the package's ordinary Host route at `/api/codex-usage`;
-it does not depend on dynamic Cordis `harness` globals. The Host request uses the
-same proxy configuration as `@yfzhou/dsh-llm-codex-subscription`: an explicit
+it does not depend on dynamic Cordis `harness` globals. The Host request reuses the transport from
+`@yfzhou/dsh-llm-codex-subscription`, so it automatically follows the same
+proxy behavior as Codex model requests: an explicit
 `llm-codex-subscription.proxy` setting takes precedence, followed by
 `HTTPS_PROXY`/`https_proxy` and then `HTTP_PROXY`/`http_proxy`; `NO_PROXY` and
-`no_proxy` are honored. Configure it in the DSH settings file, for example:
-
-```yaml
-llm-codex-subscription:
-  proxy: http://127.0.0.1:7890
-```
-
+`no_proxy` are honored. No extra usage-plugin proxy configuration is needed.
 The proxy is used only by the Host and is never sent to the browser.
 
 ## Install

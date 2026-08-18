@@ -1,5 +1,10 @@
+import { readFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { createTransport } from "@yfzhou/dsh-llm-codex-subscription/transport";
+
 const name = "codex-usage";
-const inject = ["settings", "subprocess", "timer", "webServer"];
+const inject = ["settings", "webServer"];
 
 const SETTINGS_NS = "llm-codex-subscription";
 const CODEX_HOME_ENV = "CODEX_HOME";
@@ -21,6 +26,22 @@ function authFileFrom(settings) {
 function proxyFrom(settings) {
   const proxy = configFrom(settings)?.proxy;
   return typeof proxy === "string" && proxy.trim().length > 0 ? proxy.trim() : undefined;
+}
+
+async function fetchUsage(settings, authFile) {
+  const auth = JSON.parse(await readFile(authFile, "utf8"));
+  const token = auth?.tokens?.access_token;
+  const accountId = auth?.tokens?.account_id;
+  if (typeof token !== "string" || token.length === 0) throw new Error("missing access token");
+  const transport = await createTransport({ proxy: proxyFrom(settings) });
+  const response = await transport.fetch(USAGE_URL, {
+    headers: {
+      authorization: "Bearer " + token,
+      accept: "application/json",
+      ...(accountId ? { "chatgpt-account-id": accountId } : {}),
+    },
+  });
+  return { status: response.status, body: await response.text() };
 }
 
 function windowOf(value, fallbackLabel) {
@@ -66,67 +87,10 @@ function parseUsage(value) {
   };
 }
 
-async function readUsage(settings, subprocess, timer) {
-  if (subprocess === undefined || timer === undefined) {
-    return { status: "error", message: "Codex usage services unavailable" };
-  }
+async function readUsage(settings) {
   try {
-    const node = await subprocess.resolveExecutable("node");
-    const authFile = authFileFrom(settings);
-    const proxy = proxyFrom(settings);
-    const script = `import { readFile } from 'node:fs/promises';
- import os from 'node:os';
- import path from 'node:path';
- const authFile = ${JSON.stringify(authFile)} ?? path.join(process.env[${JSON.stringify(CODEX_HOME_ENV)}] ?? path.join(os.homedir(), '.codex'), ${JSON.stringify(AUTH_FILE_NAME)});
- const auth = JSON.parse(await readFile(authFile, 'utf8'));
- const token = auth?.tokens?.access_token;
- const accountId = auth?.tokens?.account_id;
- if (typeof token !== 'string' || token.length === 0) throw new Error('missing access token');
- const targetUrl = ${JSON.stringify(USAGE_URL)};
- const proxyUrl = ${JSON.stringify(proxy)} ?? process.env.HTTPS_PROXY ?? process.env.https_proxy ?? process.env.HTTP_PROXY ?? process.env.http_proxy;
- const noProxy = process.env.NO_PROXY ?? process.env.no_proxy ?? '';
- const target = new URL(targetUrl);
- const hostname = target.hostname.toLowerCase();
- const bypassProxy = noProxy.split(',').map((item) => item.trim().toLowerCase()).filter(Boolean).some((item) => item === '*' || item === hostname || (item.startsWith('*') && hostname.endsWith(item.slice(1))) || (item.startsWith('.') && hostname.endsWith(item)));
- const requestInit = { headers: { authorization: 'Bearer ' + token, accept: 'application/json', ...(accountId ? { 'chatgpt-account-id': accountId } : {}) } };
- let response;
- if (proxyUrl && !bypassProxy) {
-   const proxyMod = await import('https-proxy-agent');
-   const HttpsProxyAgent = proxyMod.HttpsProxyAgent ?? proxyMod.default?.HttpsProxyAgent;
-   const { default: nodeFetch } = await import('node-fetch');
-   if (typeof HttpsProxyAgent !== 'function' || typeof nodeFetch !== 'function') throw new Error('proxy transport dependencies unavailable');
-   response = await nodeFetch(targetUrl, { ...requestInit, agent: new HttpsProxyAgent(proxyUrl) });
- } else {
-   response = await fetch(targetUrl, requestInit);
- }
- process.stdout.write(JSON.stringify({ status: response.status, body: await response.text() }));`;
-    const child = subprocess.spawn({
-      argv: [node, "--input-type=module", "--eval", script],
-      cwd: process.cwd(),
-      stdio: {
-        stdin: "ignore",
-        stdout: { maxBytes: 1024 * 1024 },
-        stderr: { maxBytes: 64 * 1024 },
-      },
-      graceMs: 3000,
-    });
-    const cancelStop = timer.timeout(() => child.terminate(), 30000);
-    const result = await child.done;
-    cancelStop();
-    const output = child.collected.stdout?.readFrom(0).text ?? "";
-    const stderr = child.collected.stderr?.readFrom(0).text.trim() ?? "";
-    if (result.exitCode !== 0) {
-      return {
-        status: "error",
-        message: `Codex usage request failed (subprocess exit ${String(result.exitCode)}, signal ${String(result.signal)})${stderr ? `: ${stderr.slice(-500)}` : ""}`,
-      };
-    }
-    let envelope;
-    try {
-      envelope = JSON.parse(output);
-    } catch (error) {
-      return { status: "error", message: `Codex usage envelope was not JSON (${error?.message ?? "parse error"})` };
-    }
+    const authFile = authFileFrom(settings) ?? path.join(process.env[CODEX_HOME_ENV] ?? path.join(os.homedir(), ".codex"), AUTH_FILE_NAME);
+    const envelope = await fetchUsage(settings, authFile);
     if (envelope.status < 200 || envelope.status >= 300) {
       return { status: "error", message: `Codex usage request failed (HTTP ${envelope.status})` };
     }
@@ -144,8 +108,6 @@ async function readUsage(settings, subprocess, timer) {
 
 function apply(ctx) {
   const settings = ctx.settings;
-  const subprocess = ctx.subprocess;
-  const timer = ctx.timer;
   const webServer = ctx.webServer;
   ctx.effect(() => webServer.register({
     kind: "exact",
@@ -156,7 +118,7 @@ function apply(ctx) {
         res.end(JSON.stringify({ status: "error", message: "Method not allowed" }));
         return;
       }
-      const result = await readUsage(settings, subprocess, timer);
+      const result = await readUsage(settings);
       res.writeHead(result.status === "ok" ? 200 : 502, { "content-type": "application/json", "cache-control": "no-store" });
       res.end(JSON.stringify(result));
     },
