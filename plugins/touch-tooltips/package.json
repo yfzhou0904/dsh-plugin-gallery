@@ -1,7 +1,7 @@
 {
   "name": "@yfzhou/dsh-touch-tooltips",
   "description": "Suppresses DSH's hover/focus tooltip bubbles on touch devices, where a tap leaves them stuck on screen.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "main": "lib/index.js",
   "files": ["lib", "README.md", "LICENSE", "cordis.bundle.yml"],
