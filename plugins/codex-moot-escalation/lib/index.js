@@ -40,13 +40,37 @@ function strip(tool) {
 	return { ...tool, parameters: nextParams };
 }
 
-/** Resolve the provider route an agent is running under. */
-function providerOf(agent) {
-	if (agent && agent.options && agent.options.provider) return agent.options.provider;
+/**
+ * Resolve the provider route an agent is ACTUALLY running under.
+ *
+ * `agent.options.provider` is only the agent's configured default and can
+ * diverge from the provider a session really runs under: the per-session model
+ * selection and the `agent/request` waterfall override it (so a session whose
+ * `options.provider` is `"codex"` may still be routed to another provider, and
+ * vice versa). Trusting it makes the codex gate intermittent. Read the resolved
+ * provider instead, in precedence order:
+ *
+ *  1. the session's last request/header config — the true routed provider
+ *     (authoritative once a request has been built);
+ *  2. the deployment default model selection via `agentDefaultModel` — covers a
+ *     fresh session's FIRST request, before any header exists;
+ *  3. the agent's configured provider option, as a last resort.
+ */
+function providerOf(agent, ctx) {
 	if (agent && agent.session && typeof agent.session.requestHeader === 'function') {
 		const hdr = agent.session.requestHeader();
 		if (hdr && hdr.config && hdr.config.provider) return hdr.config.provider;
 	}
+	const adm = ctx.get('agentDefaultModel');
+	if (adm && typeof adm.currentSelection === 'function') {
+		try {
+			const selection = adm.currentSelection();
+			if (selection && selection.provider) return selection.provider;
+		} catch (_e) {
+			// fall through to the last resort
+		}
+	}
+	if (agent && agent.options && agent.options.provider) return agent.options.provider;
 	return void 0;
 }
 
@@ -56,7 +80,7 @@ export function apply(ctx) {
 		const agent = context && context.agent;
 		if (!agent) return result;
 		// Blast-radius gate: only the Codex provider.
-		if (providerOf(agent) !== 'codex') return result;
+		if (providerOf(agent, ctx) !== 'codex') return result;
 		// Only when the effective mode makes every escalation moot (nothing wider).
 		const sp = ctx.get('sandboxPolicy');
 		let mode;
