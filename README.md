@@ -16,6 +16,7 @@ A personal collection of plugins for [DeepSeek Harness (DSH)](https://www.npmjs.
 | [Touch Tooltips](plugins/touch-tooltips) | `@yfzhou/dsh-touch-tooltips` | Web client | Suppresses tooltip bubbles on touch devices, where a tap would otherwise leave them stuck on screen. |
 | [Codex Moot Escalation](plugins/codex-moot-escalation) | `@yfzhou/dsh-codex-moot-escalation` | Host | Removes impossible escalation arguments for Codex sessions already running with unrestricted sandbox access. |
 | [Codex Subscription](plugins/codex-subscription) | `@yfzhou/dsh-llm-codex-subscription` | Host | Adds a Codex provider that reuses the local Codex CLI login for ChatGPT subscription models. |
+| [Codex Usage](plugins/codex-usage) | `@yfzhou/dsh-codex-usage` | Host + Web client | Shows manual Codex subscription usage and reset time inside Codex conversations. |
 
 ## Installation
 

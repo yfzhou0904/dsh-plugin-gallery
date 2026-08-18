@@ -34,6 +34,8 @@ importers:
         specifier: ^3.3.2
         version: 3.3.2
 
+  plugins/codex-usage: {}
+
   plugins/composer-enter: {}
 
   plugins/full-width-chat: {}

@@ -1,0 +1,4 @@
+# Profile layer for @yfzhou/dsh-codex-usage.
+- insert:
+    - id: codex-usage
+      name: '@yfzhou/dsh-codex-usage'

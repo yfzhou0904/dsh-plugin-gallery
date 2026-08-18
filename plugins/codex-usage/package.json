@@ -1,0 +1,32 @@
+{
+  "name": "@yfzhou/dsh-codex-usage",
+  "description": "Shows the current Codex subscription usage and reset time inside Codex conversations.",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "lib/index.js",
+  "files": ["lib", "README.md", "LICENSE", "cordis.bundle.yml"],
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.bundle.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": ["slots"]
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yfzhou0904/dsh-plugin-gallery.git",
+    "directory": "plugins/codex-usage"
+  },
+  "homepage": "https://github.com/yfzhou0904/dsh-plugin-gallery#readme",
+  "bugs": "https://github.com/yfzhou0904/dsh-plugin-gallery/issues",
+  "keywords": ["deepseek", "dsh", "cordis", "plugin", "codex", "usage", "chatgpt"],
+  "publishConfig": { "access": "public" },
+  "license": "MIT"
+}
