@@ -167,8 +167,12 @@ window.__ModuleLoader__.load({
         setOpen(true);
         setLoading(true);
         setError(undefined);
-        host.call("read-usage", {})
-          .then((result) => {
+        globalThis.fetch("/api/codex-usage", { headers: { accept: "application/json" } })
+          .then((response) => response.json().then((result) => ({ response, result })))
+          .then(({ response, result }) => {
+            if (!response.ok && result?.status !== "ok") {
+              throw new Error(result?.message ?? `Codex usage request failed (HTTP ${response.status})`);
+            }
             if (result?.status === "ok") {
               setUsage(result);
               setError(undefined);

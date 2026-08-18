@@ -1,5 +1,5 @@
 const name = "codex-usage";
-const inject = ["settings", "subprocess", "timer"];
+const inject = ["settings", "subprocess", "timer", "webServer"];
 
 const SETTINGS_NS = "llm-codex-subscription";
 const CODEX_HOME_ENV = "CODEX_HOME";
@@ -118,10 +118,21 @@ function apply(ctx) {
   const settings = ctx.settings;
   const subprocess = ctx.subprocess;
   const timer = ctx.timer;
-  ctx.effect(
-    () => harness.handle("read-usage", () => readUsage(settings, subprocess, timer)),
-    "codex usage handler",
-  );
+  const webServer = ctx.webServer;
+  ctx.effect(() => webServer.register({
+    kind: "exact",
+    path: "/api/codex-usage",
+    handler: async (req, res) => {
+      if (req.method !== "GET") {
+        res.writeHead(405, { "content-type": "application/json" });
+        res.end(JSON.stringify({ status: "error", message: "Method not allowed" }));
+        return;
+      }
+      const result = await readUsage(settings, subprocess, timer);
+      res.writeHead(result.status === "ok" ? 200 : 502, { "content-type": "application/json", "cache-control": "no-store" });
+      res.end(JSON.stringify(result));
+    },
+  }), "codex usage route");
 }
 
 export { apply, inject, name };

@@ -19,6 +19,9 @@ published package does not include credentials or tokens. If the Codex provider
 has an `account` plus `accounts` configuration, that selected account file is
 used; otherwise the standard Codex home auth file is used.
 
+The browser talks to the package's ordinary Host route at `/api/codex-usage`;
+it does not depend on dynamic Cordis `harness` globals.
+
 ## Install
 
 ```bash
