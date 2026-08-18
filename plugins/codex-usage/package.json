@@ -30,6 +30,6 @@
   "publishConfig": { "access": "public" },
   "license": "MIT",
   "dependencies": {
-    "@yfzhou/dsh-llm-codex-subscription": "0.1.1"
+    "@yfzhou/dsh-llm-codex-subscription": "0.1.2"
   }
 }
