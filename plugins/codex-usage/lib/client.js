@@ -199,20 +199,22 @@ window.__ModuleLoader__.load({
     }
 
     function apply(ctx) {
-      const models = ctx.get("modelDirectories");
-      ctx.slots.inject("conversation.input.left", () => ctx.slots.register(
-        {
-          name: "conversation.input.left",
-          id: "codex-usage",
-          order: 20,
-          label: "Codex usage",
-          inject: (sessionId) => {
-            if (models === undefined || typeof models.directoryFor !== "function" || sessionId === undefined) return { directory: undefined };
-            return { directory: models.directoryFor(sessionId).store };
+      ctx.inject(["slots", "modelDirectories"], (scope) => {
+        const models = scope.modelDirectories;
+        scope.slots.inject("conversation.input.left", () => scope.slots.register(
+          {
+            name: "conversation.input.left",
+            id: "codex-usage",
+            order: 20,
+            label: "Codex usage",
+            inject: (sessionId) => {
+              if (models === undefined || typeof models.directoryFor !== "function" || sessionId === undefined) return { directory: undefined };
+              return { directory: models.directoryFor(sessionId).store };
+            },
           },
-        },
-        UsageControl,
-      ));
+          UsageControl,
+        ));
+      });
     }
 
     exports.name = name;
