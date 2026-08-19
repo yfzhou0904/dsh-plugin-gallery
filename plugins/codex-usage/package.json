@@ -1,7 +1,7 @@
 {
   "name": "@yfzhou/dsh-codex-usage",
   "description": "Shows the current Codex subscription usage and reset time inside Codex conversations.",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "type": "module",
   "main": "lib/index.js",
   "files": ["lib", "README.md", "LICENSE", "cordis.bundle.yml"],
@@ -30,6 +30,6 @@
   "publishConfig": { "access": "public" },
   "license": "MIT",
   "dependencies": {
-    "@yfzhou/dsh-llm-codex-subscription": "0.1.2"
+    "@yfzhou/dsh-llm-codex-subscription": "latest"
   }
 }
