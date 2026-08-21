@@ -27,10 +27,13 @@ dsh plugin --profile web add @yfzhou/dsh-mobile-sidebar
 
 Every gallery package is a self-contained DSH bundle. The command installs the dependency and automatically adds its `cordis.bundle.yml` patch to the profile's `dsh.profile.bundles` stack. Do not add a duplicate row to `cordis.patch.yml`.
 
-For local development, pass the plugin directory instead:
+For local development, pass a `file:` package specifier instead of a bare
+path. This copies the package into the profile and installs its declared
+dependencies (a bare path is treated as a pnpm link, which does not install
+dependencies for packages such as Codex Usage):
 
 ```bash
-dsh plugin --profile web add ./plugins/mobile-sidebar
+dsh plugin --profile web add file:./plugins/mobile-sidebar
 ```
 
 Upgrade installed plugins with `dsh plugin --profile web update`. Restart a persistent DSH service after changing its profile. Browser plugins also require a page refresh after first installation or upgrade.
