@@ -21,19 +21,15 @@ The package supplies its own DSH bundle row; do not add a separate
 Selected DeepSeek V4 and GPT-5.6 models are recognized, including
 `deepseek-v4-flash-vision-exp`; DeepSeek ids carrying a build tag (e.g.
 `deepseek-v4-flash-ga-260731`) are normalized to their family.
-DeepSeek V4 uses the published [time-of-day
-schedule](https://api-docs.deepseek.com/zh-cn/quick_start/pricing) — peak is
-09:00–12:00 and 14:00–18:00 Beijing, everything else off-peak. Per million
-tokens (uncached input / cache-hit input / output):
+DeepSeek V4 is always counted at the published off-peak/normal rate. Per
+million tokens (uncached input / cache-hit input / output):
 
-| Model | Off-peak | Peak |
-| --- | --- | --- |
-| Flash | ¥1.50 / ¥0.05 / ¥4.50 | ¥3.00 / ¥0.10 / ¥9.00 |
-| Pro | ¥4.50 / ¥0.15 / ¥13.50 | ¥9.00 / ¥0.30 / ¥27.00 |
+| Model | Rate |
+| --- | --- |
+| Flash | ¥1.50 / ¥0.05 / ¥4.50 |
+| Pro | ¥4.50 / ¥0.15 / ¥13.50 |
 
-Each request picks its bucket from its own start time and is never split across
-a pricing boundary. Rates change; check the embedded table before relying on the
-number.
+Rates change; check the embedded table before relying on the number.
 
 Tested with DSH `0.1.0-rc.6`. Requires the `sessionProjections` host service,
 the `slots` client service, and the `conversation.composer.dock` slot.
