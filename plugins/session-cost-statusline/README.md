@@ -18,8 +18,9 @@ The package supplies its own DSH bundle row; do not add a separate
 
 ## Pricing
 
-Selected DeepSeek V4 and GPT-5.6 models are recognized; DeepSeek ids carrying a
-build tag (e.g. `deepseek-v4-flash-ga-260731`) are normalized to their family.
+Selected DeepSeek V4 and GPT-5.6 models are recognized, including
+`deepseek-v4-flash-vision-exp`; DeepSeek ids carrying a build tag (e.g.
+`deepseek-v4-flash-ga-260731`) are normalized to their family.
 DeepSeek V4 uses the published [time-of-day
 schedule](https://api-docs.deepseek.com/zh-cn/quick_start/pricing) — peak is
 09:00–12:00 and 14:00–18:00 Beijing, everything else off-peak. Per million

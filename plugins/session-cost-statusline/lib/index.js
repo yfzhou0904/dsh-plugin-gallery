@@ -34,6 +34,10 @@ const DEEPSEEK_RATES = {
     offPeak: cnyPerMillion(1.5, 0.05, 4.5),
     peak: cnyPerMillion(3.0, 0.10, 9.0),
   },
+  "deepseek-v4-flash-vision-exp": {
+    offPeak: cnyPerMillion(1.5, 0.05, 4.5),
+    peak: cnyPerMillion(3.0, 0.10, 9.0),
+  },
   "deepseek-v4-pro": {
     offPeak: cnyPerMillion(4.5, 0.15, 13.5),
     peak: cnyPerMillion(9.0, 0.30, 27.0),
@@ -45,6 +49,20 @@ const DEEPSEEK_RATES = {
 // state (model and request timing) deliberately stays out of the schema.
 const viewSchema = z.object({
   currency: z.string(),
+  totalCny: z.number().nonnegative(),
+  pricedMessages: z.number().int().nonnegative(),
+  unpricedMessages: z.number().int().nonnegative(),
+}).strict();
+
+const stateSchema = z.object({
+  activeModel: z.string().nullable(),
+  openStep: z.object({
+    turn: z.number().int().nonnegative(),
+    step: z.number().int().nonnegative(),
+    model: z.string().nullable(),
+    startTime: z.number().nonnegative(),
+    requestTime: z.number().nonnegative().nullable(),
+  }).nullable(),
   totalCny: z.number().nonnegative(),
   pricedMessages: z.number().int().nonnegative(),
   unpricedMessages: z.number().int().nonnegative(),
@@ -84,7 +102,16 @@ function rateFor(model, timestamp) {
 
 const projection = {
   key: "sessionCost",
-  schema: viewSchema,
+  stateSchema,
+  wire: {
+    viewSchema,
+    view: (state) => ({
+      currency: "CNY",
+      totalCny: state.totalCny,
+      pricedMessages: state.pricedMessages,
+      unpricedMessages: state.unpricedMessages,
+    }),
+  },
   init: () => ({
     activeModel: null,
     openStep: null,
@@ -169,12 +196,6 @@ const projection = {
       pricedMessages: next.pricedMessages + 1,
     };
   },
-  view: (state) => ({
-    currency: "CNY",
-    totalCny: state.totalCny,
-    pricedMessages: state.pricedMessages,
-    unpricedMessages: state.unpricedMessages,
-  }),
   // v3 pins the model to each step. This keeps replay correct when another
   // request changes the session header before an earlier message is assembled.
   // Old checkpoints are discarded and replayed by the projection cache.
